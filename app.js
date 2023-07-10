@@ -8,7 +8,7 @@ const app=express();
 dotenv.config();
 app.use(cors());
 app.use(express.json());
-const PORT=process.env.PORT;
+const PORT=process.env.PORT || 5000;
 const Pool=require("pg").Pool
 
 const tblSchool=require('./Controller/school');
