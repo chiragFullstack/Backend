@@ -3,10 +3,10 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
 const pool=new Pool({
-    user:'postgres',
-    host:'localhost',
-    database:'dayCareDB',
-    password:'123456',
+    user:'developer',
+    host:'54.172.2.94',
+    database:'daycare',
+    password:'wP322$pSIdsc',
     port:5432
 });
 
