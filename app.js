@@ -139,7 +139,7 @@ app.post('/api/login',async(req, res) =>{
 
 app.post('/api/checkusername',upload.none(),(req, res) =>{
     const username=req.body.username;
-    pool.query('select * from users where name=$1 RETURNING *',[username],(err,result)=>{
+    pool.query('select * from users where name=$1',[username],(err,result)=>{
         if(err){console.log(err); throw err}else{
             if(result.rows>0){
                 res.json({
