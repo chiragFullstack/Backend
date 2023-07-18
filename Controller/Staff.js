@@ -20,6 +20,16 @@ const getStaff=(req,res)=>{
     });
 }
 
+const getSchoolStaff=(req,res)=>{
+    const id = parseInt(req.params.id);
+    pool.query('select * from tblstaff where schoolid=$1',[id],(err,result)=>{
+        if(err){console.log(err); throw err}
+        res.json({
+            data:result.rows
+        });
+    });
+}
+
 const getPrincipalId = async (schoolId) => {
     try {
       const result = await pool.query('SELECT id FROM subadmin WHERE schoolid = $1', [schoolId]);
@@ -45,6 +55,16 @@ const getStaffById=(req,res)=>{
 }
 
 const deleteStaff=(req,res)=>{
+    const id = parseInt(req.query.id);
+    pool.query('delete  from tblstaff where id = $1', [id],(err,result)=>{
+        if(err){console.log(err); throw err}
+        res.json({
+            data:result.rows
+        }); 
+    });
+}
+
+const deleteStaffWeb=(req,res)=>{
     const id = parseInt(req.params.id);
     pool.query('delete  from tblstaff where id = $1', [id],(err,result)=>{
         if(err){console.log(err); throw err}
@@ -55,5 +75,5 @@ const deleteStaff=(req,res)=>{
 }
 
 module.exports={
-     getStaff,deleteStaff,getStaffById,getPrincipalId
+     getStaff,deleteStaff,deleteStaffWeb,getStaffById,getPrincipalId,getSchoolStaff
 }

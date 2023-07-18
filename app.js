@@ -1,5 +1,6 @@
 const dotenv=require('dotenv');
 const express=require('express');
+const bodyParser = require('body-parser');
 const multer = require('multer');
 const cors=require('cors');
 const AWS = require('./Controller/config');
@@ -7,8 +8,10 @@ const nodemailer = require('nodemailer');
 
 const app=express();
 dotenv.config();
+
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json());
 const PORT=process.env.PORT;
 const Pool=require("pg").Pool
 
@@ -58,6 +61,103 @@ app.get('/',(req,res)=>{
     res.send('connected');
 });
 
+app.post('/api/login',async(req, res) =>{
+    console.log('record to get ', req.body);
+    const username=req.body.username;
+    const userpassword=req.body.password;
+    const devicetype=req.body.devicetype;
+    const devicetoken=req.body.devicetoken;
+    let schoolId='',principalId='';
+    let userId=0;
+    let userType='',name='';
+
+    let responseData=[];
+     pool.query(`select * from users where name=$1 and password=$2`, [username,userpassword],async(err,result)=>{
+        if(err){console.log(err); throw err}else{
+            if(result.rowCount>0){
+                userType=result.rows[0].role;
+                const reslt = await pool.query('insert into devicedetails(devicetype,devicetoken,username)values ($1,$2,$3)', [devicetype,devicetoken,username]);
+                if(userType=='subAdmin'){
+                    const resultsub = await pool.query('SELECT id,schoolid,name FROM subadmin WHERE username = $1', [username]);
+                    userId= resultsub.rows[0].id;
+                    schoolId= resultsub.rows[0].schoolid;
+                    name= resultsub.rows[0].name;
+                    console.log(userId, schoolId);
+                    let record={
+                        id:userId,
+                        schoolid:schoolId,
+                        usertype:userType,
+                        username:name
+                    }
+                    responseData.push(record);
+                }else if(userType=='staff'){
+                    const resultsub = await pool.query('SELECT id,schoolid,principalid,name FROM tblstaff WHERE username = $1', [username]);
+                    userId= resultsub.rows[0].id;
+                    schoolId= resultsub.rows[0].schoolid;
+                    principalId=resultsub.rows[0].principalid;
+                    name= resultsub.rows[0].name;
+                    console.log(userId, schoolId,principalId);
+                    let record={
+                        id:userId,
+                        schoolid:schoolId,
+                        usertype:userType,
+                        username:name,
+                        principalid:principalId
+                    }
+                    responseData.push(record);
+                }else if(userType=='parent'){
+                    const resultsub = await pool.query('SELECT name,id,schoolid FROM parent WHERE username = $1', [username]);
+                    userId= resultsub.rows[0].id;
+                    schoolId= resultsub.rows[0].schoolid;
+                    name= resultsub.rows[0].name;
+                    let record={
+                        id:userId,
+                        schoolid:schoolId,
+                        username:name,
+                    }
+                    responseData.push(record);
+                    console.log(userId, schoolId,principalId);
+                }
+                res.status(200).json({
+                    message:'true',
+                    statusCode:200,
+                    status:true,
+                    data:responseData
+                });
+            }else{
+                res.status(200).json({
+                    message:'Invalid Username or Password',
+                    statusCode:200,
+                    status:false,
+                    data:responseData
+                });
+                console.log('not matched ');
+            }
+        }
+    });    
+});
+
+app.post('/api/checkusername',upload.none(),(req, res) =>{
+    const username=req.body.username;
+    pool.query('select * from users where name=$1 RETURNING *',[username],(err,result)=>{
+        if(err){console.log(err); throw err}else{
+            if(result.rows>0){
+                res.json({
+                    message:'true',
+                    statusCode:200,
+                    status:true
+                });
+            }else{
+                res.json({
+                    message:'false',
+                    statusCode:200,
+                    status:false
+                });
+            }
+        }
+    });    
+});
+
 //manage the parent 
 app.get('/api/Parent/allParent',tblParent.getParent);
 app.delete('/api/Parent/deleteParent/:id',tblParent.deleteParent);
@@ -99,52 +199,60 @@ app.put('/api/Parent/editParent/:id',upload.single('logo'),(req, res) =>{
 //api to manage Staff Member 
 app.get('/api/staff/allStaff',tblStaff.getStaff);
 app.get('/api/staff/staffById/:id',tblStaff.getStaffById);
-app.delete('/api/staff/deleteStaff/:id',tblStaff.deleteStaff);
-app.get('/api/staff/getRoombySchool/:id',tblRoom.getRoomBySchoolId);
+app.get('/api/staff/getSchoolStaff/:id',tblStaff.getSchoolStaff);
+app.delete('/webapi/staff/deleteStaff/:id',tblStaff.deleteStaffWeb);
+
+app.delete('/api/staff/deleteStaff',tblStaff.deleteStaff);
+
+
+app.get('/api/staff/getRoombySchool',tblRoom.getRoomBySchoolId);
 app.post('/api/staff/addStaff',upload.single('logo'),async(req, res) =>{
-    const{name,contact,email,designation,schoolId,classId,userName}=req.body;
-    const file = req.file;
-    console.log(file);
-    const s3 = new AWS.S3();
+    const{name,contact,email,designation,schoolId,classId,logo,username}=req.body;
+    console.log(req.body);
+    //const file = req.file;
+   // console.log(file);
+    //const s3 = new AWS.S3();
     let location='';
     let Password='';
-    const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-      };
-      s3.upload(params,async (err, data) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log('Image uploaded successfully:', data.Location);
-          location=data.Location;
-          pool.connect();
+    pool.connect();
         let principalId=await tblStaff.getPrincipalId(parseInt(schoolId));
         const Principal_id=JSON.stringify(principalId[0].id);
         //console.log('to add staff get principal ID---',JSON.stringify(principalId[0].id));
         Password=generateRandomPassword(12);
 
         const userRole="staff"; 
-        await pool.query('insert into users(name,role,password)values($1,$2,$3)RETURNING *',[userName,userRole,Password],(err,rsult)=>{
+        await pool.query('insert into users(name,role,password)values($1,$2,$3)RETURNING *',[username,userRole,Password],(err,rsult)=>{
             if(err){console.log(err); throw err}
         });
 
-      await pool.query('insert into tblstaff(name,contact,email,password,designation,schoolid,classid,principalid,picurl,username)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[name,contact,email,Password,designation,schoolId,classId,Principal_id,location,userName],(err,result)=>{
+      await pool.query('insert into tblstaff(name,contact,email,password,designation,schoolid,classid,principalid,picurl,username)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[name,contact,email,Password,designation,schoolId,classId,Principal_id,location,username],(err,result)=>{
               if(err){console.log(err); throw err}else{
                   res.status(200).json({
-                      msg:'record Inserted',
+                      message:'record Inserted',
+                      status:true,
+                      statusCode:200,
                       data:result.rows[0],
                   });
               }
-          });
-        }
-      }); 
+        });
+    /*const params = {
+        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+        Key: file.originalname,
+        Body: file.buffer,
+    //   };*/
+    //   s3.upload(params,async (err, data) => {
+    //     if (err) {
+    //       console.error(err);
+    //     } else {
+    //       console.log('Image uploaded successfully:', data.Location);
+    //       location=data.Location;
+    //     }
+    //   }); 
 });
 
 
 app.put('/api/staff/EditStaff/:id',upload.single('logo'),async(req, res) =>{
-    const{name,contact,email,password,designation,schoolId,principalId,classId,userName}=req.body;
+    const{name,contact,email,password,designation,schoolId,principalId,classId,logo,userName}=req.body;
     const file = req.file;
     console.log(file);
     const s3 = new AWS.S3();
@@ -189,7 +297,6 @@ app.post('/addSchool',upload.single('logo'), async(req, res) =>{
     const{name, address,contact,email,bgcolor, forecolor, logo, websiteurl}=req.body;
     const file = req.file;
     console.log(file);
-
     const s3 = new AWS.S3();
     let location="";
     const params = {
@@ -215,6 +322,7 @@ app.post('/addSchool',upload.single('logo'), async(req, res) =>{
         }
       }); 
 });
+
 app.put('/editSchool/:id',upload.single('logo'),(req, res) =>{
     const id = parseInt(req.params.id);
     const{name, address,contact,email,bgcolor, forecolor, logo, websiteurl}=req.body;
@@ -269,8 +377,12 @@ app.put('/api/service/editService/:id',upload.none(),(req, res) =>{
 
 //rooms details 
 app.get('/api/room/allRoom',tblRoom.getRoom);
-app.delete('/api/room/deleteRoom/:id',tblRoom.deleteRoom);
-app.get('/api/room/roomById/:id',tblRoom.getRoomById);
+app.delete('/webapi/room/deleteRoom/:id',tblRoom.deleteRoomweb);
+app.get('/webapi/room/roomById/:id',tblRoom.getRoomByIdWeb);
+app.get('/webapi/room/roomBySchoolWebId/:id',tblRoom.getRoomBySchoolWebId);
+
+app.delete('/api/room/deleteRoom',tblRoom.deleteRoom);
+app.get('/api/room/roomById',tblRoom.getRoomById);
 app.post('/api/room/addRoom',upload.none(),(req, res) =>{
     const{name,schoolId,description}=req.body;
     console.log(req.body);
@@ -278,14 +390,16 @@ app.post('/api/room/addRoom',upload.none(),(req, res) =>{
     pool.query('insert into tblclass(name,schoolid,description)values($1,$2,$3) RETURNING *',[name, schoolId,description],(err,result)=>{
         if(err){console.log(err); throw err}else{
             res.status(200).json({
-                msg:'record Inserted',
+                statusCode:200,
+                message:'Room Record Inserted',
                 data:result.rows[0],
+                status:true
             });
         }
     });    
 });
 
-app.put('/api/room/editroom/:id',upload.none(),(req, res) =>{
+app.put('/webapi/room/editroom/:id',upload.none(),(req, res) =>{
     const id = parseInt(req.params.id);
     const{name,schoolId,description}=req.body;
     console.log(req.body);
@@ -300,36 +414,88 @@ app.put('/api/room/editroom/:id',upload.none(),(req, res) =>{
     });
 });
 
+app.put('/api/room/editroom',upload.none(),(req, res) =>{
+    const id = parseInt(req.body.id);
+    const{name,schoolId,description}=req.body;
+    console.log(req.body);
+    pool.connect();
+    pool.query('update tblclass set name=$1,schoolid=$2,description=$3 where id='+id+' RETURNING *',[name,schoolId,description],(err,result)=>{
+        if(err){console.log(err); throw err}else{
+            res.status(200).json({
+                message:'record Updated',
+                status:true,
+                statusCode:200,
+                data:result.rows[0],
+            });
+        }
+    });
+});
 
 //code to connect with the student 
 app.get('/api/student/studentlist',tblStudent.getStudent);
 app.delete('/api/student/deleteStudent/:id',tblStudent.deleteStudent);
 app.get('/api/student/getStudentById/:id',tblStudent.getStudentById);
-app.post('/api/student/addStudent',upload.single('picurl'),(req, res) =>{
-    const{name,dateofbirth,contact,address,schoolid,roomid,parentid,picurl}=req.body;
-    
-    pool.connect(); 
-   
-    pool.query('insert into tblstudent(name,dateofbirth,contact,address,schoolid,roomid,parentid,picurl)values($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',[name,dateofbirth,contact,address,schoolid,roomid,parentid,picurl],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Inserted',
-                data:result.rows[0],
-            });
+app.get('/api/student/getStudentByParentId/:id',tblStudent.getStudentByparentId);
+app.post('/api/student/addStudent',upload.single('logo'),(req, res) =>{
+    console.log(req.body);
+    const{name,dateofbirth,schoolid,roomid,parentid,logo}=req.body;
+    const file=req.file;
+    const s3 = new AWS.S3();
+    let filelocation="";
+    const params = {
+        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+        Key: file.originalname,
+        Body: file.buffer,
+      };
+      s3.upload(params, async(err, data) => {
+        if (err) {
+          console.error(err);
+        } else {
+            console.log('file url',data.Location);
+            filelocation=data.Location;
+            pool.connect();
+            pool.query('insert into tblstudent(name,dateofbirth,schoolid,roomid,parentid,picurl)values($1,$2,$3,$4,$5,$6) RETURNING *',[name,dateofbirth,schoolid,roomid,parentid,filelocation],(err,result)=>{
+                if(err){console.log(err); throw err}else{
+                    res.status(200).json({
+                        statusCode:200,
+                        status:true,
+                        message:'record Inserted',
+                        data:result.rows[0],
+                    });
+                }
+            });  
         }
-    });    
+    });
 });
 
-app.put('/api/student/editStudent/:id',upload.single('picurl'),(req, res) =>{
-    const{name,dateofbirth,contact,address,schoolid,roomid,parentid,picurl}=req.body;
+app.put('/api/student/editStudent/:id',upload.single('logo'),(req, res) =>{
+    const{name,dateofbirth,schoolid,roomid,parentid,logo}=req.body;
     const id = parseInt(req.params.id);
     console.log(req.body);
-    pool.connect();
-    pool.query('update tblstudent set name=$1,dateofbirth=$2,contact=$3,address=$4,schoolid=$5,roomid=$6,parentid=$7,picurl=$8 where id='+id+' RETURNING *',[name,dateofbirth,contact,address,schoolid,roomid,parentid,picurl],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
+    const file=req.file;
+    const s3 = new AWS.S3();
+    let filelocation="";
+    const params = {
+        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+        Key: file.originalname,
+        Body: file.buffer,
+    };
+    s3.upload(params, async(err, data) => {
+        if (err) {
+          console.error(err);
+        } else {
+            console.log('file url',data.Location);
+            filelocation=data.Location;
+            pool.connect();
+            pool.query('update tblstudent set name=$1,dateofbirth=$2,schoolid=$3,roomid=$4,parentid=$5,picurl=$6 where id='+id+' RETURNING *',[name,dateofbirth,schoolid,roomid,parentid,location],(err,result)=>{
+                if(err){console.log(err); throw err}else{
+                    res.status(200).json({
+                        statusCode:200,
+                        status:true,
+                        message:'record Updated',
+                        data:result.rows[0],
+                    });
+                }
             });
         }
     });    
