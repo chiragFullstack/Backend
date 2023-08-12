@@ -91,7 +91,7 @@ const editNotice=require('./routes/notice/editNotice');
 const getNoticeBySchoolId=require('./routes/notice/noticeList');
 
 const studentCheckIn=require('./routes/studentAttendence/studentCheckIn');
-const studentCheckOut=require('./routes/studentAttendence/studentCheckout');
+const studentCheckOut=require('./routes/studentAttendence/studentCheckOut');
 const getStudentStatus=require('./routes/studentAttendence/getStudentStatus');
 
 const addVideo=require('./routes/video/addVideo');
