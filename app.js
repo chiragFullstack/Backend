@@ -1,33 +1,112 @@
-const dotenv=require('dotenv');
+require('dotenv').config();
 const express=require('express');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const cors=require('cors');
-const AWS = require('./Controller/config');
 const nodemailer = require('nodemailer');
 
-const app=express();
-dotenv.config();
+const http=require('http');
+const socketIO=require('socket.io');
 
-app.use(cors());
+const app=express();
+
+
 app.use(express.json());
+app.use(cors());
 app.use(bodyParser.json());
+const server=http.createServer(app);
+
 const PORT=process.env.PORT;
 const Pool=require("pg").Pool
 
 
-const tblSchool=require('./Controller/school');
-const tblService=require('./Controller/schoolservice');
-const tblSubadmin=require('./Controller/subAdmin');
-const tblObtainedServcie=require('./Controller/serviceClaim');
-const tblRoom=require('./Controller/room');
-const tblStudent=require('./Controller/student');
-const tblParent=require('./Controller/parent');
-const tblStaff=require('./Controller/Staff');
+
+const chkCred=require('./routes/Login/login');
+const checkUser=require('./routes/Login/checkusername');
+
+const insertParent=require('./routes/Parent/addParent');
+const editParent=require('./routes/Parent/editParent');
+const listParent=require('./routes/Parent/parentList');
+const deleteParent=require('./routes/Parent/deleteParent');
+const getParentById=require('./routes/Parent/getParentById');
+const getParentByRoomId=require('./routes/Parent/getParentByRoomId');
+
+const allStaff=require('./routes/Staff/allStaff');
+const deleteStaff=require('./routes/Staff/delete');
+const getStaffById=require('./routes/Staff/getStaffById');
+const getSchoolStaff=require('./routes/Staff/getSchoolStaff');
+const addStaff=require('./routes/Staff/addStaff');
+const editStaff=require('./routes/Staff/editStaff');
+
+const allSchool=require('./routes/School/schoolList');
+const deleteSchool=require('./routes/School/deleteSchool');
+const getSchoolById=require('./routes/School/schoolById');
+const addSchool=require('./routes/School/addSchool');
+const  editSchool=require('./routes/School/editSchool');
+
+const allService=require('./routes/Service/serviceList');
+const deleteService=require('./routes/Service/deleteService');
+const getServiceById=require('./routes/Service/serviceById');
+const insertService=require('./routes/Service/insertService');
+const editService=require('./routes/Service/editService');
+
+const allRoom=require('./routes/Room/allRoom');
+const deleteRoom=require('./routes/Room/deleteRoom');
+const roomById=require('./routes/Room/roomById');
+const roomBySchoolId=require('./routes/Room/roomBySchoolId');
+const addRoom=require('./routes/Room/addRoom');
+const editRoom=require('./routes/Room/editRoom');
+
+
+const studentList=require('./routes/Student/studentList');
+const deleteStudent=require('./routes/Student/deleteStudent');
+const getStudentById=require('./routes/Student/getStudentById');
+const getStudentByparentId=require('./routes/Student/getStudentByParentId');
+const getStudentBySchoolId=require('./routes/Student/getStudentBySchoolId');
+const getStudentByRoomId=require('./routes/Student/getStudentByRoomId');
+const addStudent=require('./routes/Student/addStudent');
+const editStudent=require('./routes/Student/editStudent');
+
+const claimedServiceList=require('./routes/claimedService/claimedServiceList');
+const deleteClaimedService=require('./routes/claimedService/deleteClaimedService');
+const claimedServiceDetails=require('./routes/claimedService/claimedServiceDetails');
+const deactivateService=require('./routes/claimedService/deactivateService');
+const addNewService=require('./routes/claimedService/addClaimedService');
+const editNewService=require('./routes/claimedService/editClaimedService');
+
+
+const getSubadmin=require('./routes/Subadmin/getSubadmin');
+const deleteSubadmin=require('./routes/Subadmin/deleteSubadmin');
+const getSubadminById=require('./routes/Subadmin/getSubadminById');
+const addSubadmin=require('./routes/Subadmin/addSubadmin');
+const editSubadmin=require('./routes/Subadmin/editSubadmin');
+
+const staffCheckIn=require('./routes/staffAttendence/staffCheckIn');
+const staffCheckOut=require('./routes/staffAttendence/staffCheckOut');
+const getstaffStatus=require('./routes/staffAttendence/getStaffStatus');
+
+const addNotice=require('./routes/notice/addNotice');
+const deleteNotice=require('./routes/notice/deleteNotice');
+const editNotice=require('./routes/notice/editNotice');
+const getNoticeBySchoolId=require('./routes/notice/noticeList');
+
+const studentCheckIn=require('./routes/studentAttendence/studentCheckIn');
+const studentCheckOut=require('./routes/studentAttendence/studentCheckout');
+const getStudentStatus=require('./routes/studentAttendence/getStudentStatus');
+
+const addVideo=require('./routes/video/addVideo');
+const editVideo=require('./routes/video/editVideo');
+const getVideoByRoomId=require('./routes/video/getVideoByRoomId');
+const getVideoBySchoolId=require('./routes/video/getVideoBySchoolId');
+const deleteVideo=require('./routes/video/deleteVideo');
+
+const getChatRoomId=require('./routes/chatmessage/getChatRoomId');
 
 //this is the folder where we need to 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+
+const socketMsg=require('./Controller/message');
 
 // Create a transporter object using SMTP
 const transporter = nodemailer.createTransport({
@@ -37,17 +116,6 @@ const transporter = nodemailer.createTransport({
     ignoreTLS: true,
 });
 
-
-//this method can be used to generate random password 
-function generateRandomPassword(length) {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
-    let password = '';  
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset.charAt(randomIndex);
-    }
-    return password;
-}
 
 const pool=new Pool({
     user:'developer',
@@ -61,555 +129,156 @@ app.get('/',(req,res)=>{
     res.send('connected');
 });
 
-app.post('/api/login',async(req, res) =>{
-    console.log('record to get ', req.body);
-    const username=req.body.username;
-    const userpassword=req.body.password;
-    const devicetype=req.body.devicetype;
-    const devicetoken=req.body.devicetoken;
-    let schoolId='',principalId='';
-    let userId=0;
-    let userType='',name='';
+//api to check user name and password 
+app.use('/api',chkCred);
+app.use('/api',checkUser);
 
-    let responseData=[];
-     pool.query(`select * from users where name=$1 and password=$2`, [username,userpassword],async(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            if(result.rowCount>0){
-                userType=result.rows[0].role;
-                const reslt = await pool.query('insert into devicedetails(devicetype,devicetoken,username)values ($1,$2,$3)', [devicetype,devicetoken,username]);
-                if(userType=='subAdmin'){
-                    const resultsub = await pool.query('SELECT id,schoolid,name FROM subadmin WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    name= resultsub.rows[0].name;
-                    console.log(userId, schoolId);
-                    let record={
-                        id:userId,
-                        schoolid:schoolId,
-                        usertype:userType,
-                        username:name
-                    }
-                    responseData.push(record);
-                }else if(userType=='staff'){
-                    const resultsub = await pool.query('SELECT id,schoolid,principalid,name FROM tblstaff WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    principalId=resultsub.rows[0].principalid;
-                    name= resultsub.rows[0].name;
-                    console.log(userId, schoolId,principalId);
-                    let record={
-                        id:userId,
-                        schoolid:schoolId,
-                        usertype:userType,
-                        username:name,
-                        principalid:principalId
-                    }
-                    responseData.push(record);
-                }else if(userType=='parent'){
-                    const resultsub = await pool.query('SELECT name,id,schoolid FROM parent WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    name= resultsub.rows[0].name;
-                    let record={
-                        id:userId,
-                        schoolid:schoolId,
-                        username:name,
-                    }
-                    responseData.push(record);
-                    console.log(userId, schoolId,principalId);
-                }
-                res.status(200).json({
-                    message:'true',
-                    statusCode:200,
-                    status:true,
-                    data:responseData
-                });
-            }else{
-                res.status(200).json({
-                    message:'Invalid Username or Password',
-                    statusCode:200,
-                    status:false,
-                    data:responseData
-                });
-                console.log('not matched ');
-            }
-        }
-    });    
-});
 
-app.post('/api/checkusername',upload.none(),(req, res) =>{
-    const username=req.body.username;
-    pool.query('select * from users where name=$1',[username],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            if(result.rows>0){
-                res.json({
-                    message:'true',
-                    statusCode:200,
-                    status:true
-                });
-            }else{
-                res.json({
-                    message:'false',
-                    statusCode:200,
-                    status:false
-                });
-            }
-        }
-    });    
-});
-
-//manage the parent 
-app.get('/api/Parent/allParent',tblParent.getParent);
-app.delete('/api/Parent/deleteParent/:id',tblParent.deleteParent);
-app.get('/api/Parent/ParentById/:id',tblParent.getParentById);
-app.post('/api/Parent/addParent',upload.none(),(req, res) =>{
-    const{name,contact,email,username,schoolId}=req.body;
-    const userPassword=generateRandomPassword(12);
-    console.log(req.body);
-    pool.connect();
-    const userName=req.body.username;
-    const userRole="parent"; 
-	pool.query('insert into users(name,role,password)values($1,$2,$3)RETURNING *',[userName,userRole,userPassword],(err,result)=>{
-        if(err){console.log(err); throw err}
-    });
-    pool.query('insert into parent(name,contact,email,username,password,schoolid)values($1,$2,$3,$4,$5,$6) RETURNING *',[name,contact,email,username,userPassword,schoolId],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Inserted',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-app.put('/api/Parent/editParent/:id',upload.single('logo'),(req, res) =>{
-    const id = parseInt(req.params.id);
-    const{name,contact,email,username,password,schoolId}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('update parent set name=$1,contact=$2,email=$3,username=$4,password=$5,schoolid=$6 where id='+id+' RETURNING *',[name,contact,email,username,password,schoolId],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });
-});
+//parent module with routes 
+app.use('/api/parent',insertParent);
+app.use('/api/parent',editParent);
+app.use('/api/parent',listParent);
+app.use('/api/parent',deleteParent);
+app.use('/api/parent',getParentById);
+app.use('/api/parent',getParentByRoomId);
 
 //api to manage Staff Member 
-app.get('/api/staff/allStaff',tblStaff.getStaff);
-app.get('/api/staff/staffById/:id',tblStaff.getStaffById);
-app.get('/api/staff/getSchoolStaff/:id',tblStaff.getSchoolStaff);
-app.delete('/webapi/staff/deleteStaff/:id',tblStaff.deleteStaffWeb);
-
-app.delete('/api/staff/deleteStaff',tblStaff.deleteStaff);
-
-
-app.get('/api/staff/getRoombySchool',tblRoom.getRoomBySchoolId);
-app.post('/api/staff/addStaff',upload.single('logo'),async(req, res) =>{
-    const{name,contact,email,designation,schoolId,classId,logo,username}=req.body;
-    console.log(req.body);
-    //const file = req.file;
-   // console.log(file);
-    //const s3 = new AWS.S3();
-    let location='';
-    let Password='';
-    pool.connect();
-        let principalId=await tblStaff.getPrincipalId(parseInt(schoolId));
-        const Principal_id=JSON.stringify(principalId[0].id);
-        //console.log('to add staff get principal ID---',JSON.stringify(principalId[0].id));
-        Password=generateRandomPassword(12);
-
-        const userRole="staff"; 
-        await pool.query('insert into users(name,role,password)values($1,$2,$3)RETURNING *',[username,userRole,Password],(err,rsult)=>{
-            if(err){console.log(err); throw err}
-        });
-
-      await pool.query('insert into tblstaff(name,contact,email,password,designation,schoolid,classid,principalid,picurl,username)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[name,contact,email,Password,designation,schoolId,classId,Principal_id,location,username],(err,result)=>{
-              if(err){console.log(err); throw err}else{
-                  res.status(200).json({
-                      message:'record Inserted',
-                      status:true,
-                      statusCode:200,
-                      data:result.rows[0],
-                  });
-              }
-        });
-    /*const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-    //   };*/
-    //   s3.upload(params,async (err, data) => {
-    //     if (err) {
-    //       console.error(err);
-    //     } else {
-    //       console.log('Image uploaded successfully:', data.Location);
-    //       location=data.Location;
-    //     }
-    //   }); 
-});
+app.use('/api/staff',allStaff);
+app.use('/api/staff',deleteStaff);
+app.use('/api/staff',getStaffById);
+app.use('/api/staff',getSchoolStaff);
+app.use('/api/staff',addStaff);
+app.use('/api/staff',editStaff);
 
 
-app.put('/api/staff/EditStaff/:id',upload.single('logo'),async(req, res) =>{
-    const{name,contact,email,password,designation,schoolId,principalId,classId,logo,userName}=req.body;
-    const file = req.file;
-    console.log(file);
-    const s3 = new AWS.S3();
-    let location='';
-    const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-      };
-      s3.upload(params,async (err, data) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log('Image uploaded successfully:', data.Location);
-        //   const paramsUrl = {
-        //     Bucket: 'webdaycarebucket',
-        //     Key: key,
-        //     Expires: expirationTimeSeconds
-        //   };
-          location=data.Location;
-          pool.connect();
+//school module to manage the API with router 
+app.use('/api/School',allSchool);
+app.use('/api/School',deleteSchool);
+app.use('/api/School',getSchoolById);
+app.use('/api/School',addSchool);
+app.use('/api/School',editSchool);
 
-      await pool.query('update tblstaff set name=$1,contact=$2,email=$3,password=$4,designation=$5,schoolid=$6,classid=$7,principalid=$8,picurl=$9,username=$10 RETURNING *',[name,contact,email,password,designation,schoolId,classId,principalId,location,userName],(err,result)=>{
-              if(err){console.log(err); throw err}else{
-                  res.status(200).json({
-                      msg:'record Inserted',
-                      data:result.rows[0],
-                  });
-              }
-          });
-        }
-      }); 
-});
-
-
-
-// list of the school to manage 
-app.get('/allSchool',tblSchool.getSchool);
-app.delete('/deleteSchool/:id',tblSchool.deleteSchool);
-app.get('/schoolById/:id',tblSchool.getSchoolById);
-app.post('/addSchool',upload.single('logo'), async(req, res) =>{
-    const{name, address,contact,email,bgcolor, forecolor, logo, websiteurl}=req.body;
-    const file = req.file;
-    console.log(file);
-    const s3 = new AWS.S3();
-    let location="";
-    const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-      };
-      s3.upload(params, async(err, data) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log('Image uploaded successfully:', data.Location);
-          location=data.Location;
-          pool.connect();
-          pool.query('insert into tblschool(name,address,contact,email,bgcolor, forecolor, logo, websiteurl)values($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',[name, address,contact, email, bgcolor, forecolor, location, websiteurl],(err,result)=>{
-              if(err){console.log(err); throw err}else{
-                  res.status(200).json({
-                      msg:'record Inserted',
-                      data:result.rows[0],
-                  });
-              }
-          });
-        }
-      }); 
-});
-
-app.put('/editSchool/:id',upload.single('logo'),(req, res) =>{
-    const id = parseInt(req.params.id);
-    const{name, address,contact,email,bgcolor, forecolor, logo, websiteurl}=req.body;
-    console.log(req.body);
-    const image = req.file;
-    console.log(image);
-    pool.connect();
-    pool.query('update tblschool set name=$1,address=$2,contact=$3,email=$4,bgcolor=$5,forecolor=$6, logo=$7, websiteurl=$8 where id='+id+' RETURNING *',[name, address,contact, email, bgcolor, forecolor, image, websiteurl],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });
-});
 
 
 
 //service details 
-app.get('/api/service/allService',tblService.getService);
-app.delete('/api/service/deleteService/:id',tblService.deleteService);
-app.get('/api/service/ServiceById/:id',tblService.getServiceById);
-app.post('/api/service/addService',upload.none(),(req, res) =>{
-    const{servicename,description}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('insert into tblservice(servicename,description)values($1,$2) RETURNING *',[servicename, description],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Inserted',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-app.put('/api/service/editService/:id',upload.none(),(req, res) =>{
-    const id = parseInt(req.params.id);
-    const{servicename,description}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('update tblservice set servicename=$1,description=$2 where id='+id+' RETURNING *',[servicename, description],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });
-});
+app.use('/api/service',allService);
+app.use('/api/service',deleteService);
+app.use('/api/service',getServiceById);
+app.use('/api/service',insertService);
+app.use('/api/service',editService);
 
 
 //rooms details 
-app.get('/api/room/allRoom',tblRoom.getRoom);
-app.delete('/webapi/room/deleteRoom/:id',tblRoom.deleteRoomweb);
-app.get('/webapi/room/roomById/:id',tblRoom.getRoomByIdWeb);
-app.get('/webapi/room/roomBySchoolWebId/:id',tblRoom.getRoomBySchoolWebId);
+app.use('/api/room',roomBySchoolId);
+app.use('/api/room',addRoom);
+app.use('/api/room',allRoom);
+app.use('/api/room',deleteRoom);
+app.use('/api/room',roomById);
+app.use('/api/room',editRoom);
 
-app.delete('/api/room/deleteRoom',tblRoom.deleteRoom);
-app.get('/api/room/roomById',tblRoom.getRoomById);
-app.post('/api/room/addRoom',upload.none(),(req, res) =>{
-    const{name,schoolId,description}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('insert into tblclass(name,schoolid,description)values($1,$2,$3) RETURNING *',[name, schoolId,description],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                statusCode:200,
-                message:'Room Record Inserted',
-                data:result.rows[0],
-                status:true
-            });
-        }
-    });    
-});
 
-app.put('/webapi/room/editroom/:id',upload.none(),(req, res) =>{
-    const id = parseInt(req.params.id);
-    const{name,schoolId,description}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('update tblclass set name=$1,schoolid=$2,description=$3 where id='+id+' RETURNING *',[name,schoolId,description],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });
-});
+//code to connect with the student router 
+app.use('/api/student',studentList);
+app.use('/api/student',deleteStudent);
+app.use('/api/student',getStudentById);
+app.use('/api/student',getStudentByparentId);
+app.use('/api/student',getStudentBySchoolId);
+app.use('/api/student',getStudentByRoomId);
+app.use('/api/student',addStudent);
+app.use('/api/student',editStudent);
 
-app.put('/api/room/editroom',upload.none(),(req, res) =>{
-    const id = parseInt(req.body.id);
-    const{name,schoolId,description}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('update tblclass set name=$1,schoolid=$2,description=$3 where id='+id+' RETURNING *',[name,schoolId,description],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                message:'record Updated',
-                status:true,
-                statusCode:200,
-                data:result.rows[0],
-            });
-        }
-    });
-});
-
-//code to connect with the student 
-app.get('/api/student/studentlist',tblStudent.getStudent);
-app.delete('/api/student/deleteStudent/:id',tblStudent.deleteStudent);
-app.get('/api/student/getStudentById/:id',tblStudent.getStudentById);
-app.get('/api/student/getStudentByParentId/:id',tblStudent.getStudentByparentId);
-app.post('/api/student/addStudent',upload.single('logo'),(req, res) =>{
-    console.log(req.body);
-    const{name,dateofbirth,schoolid,roomid,parentid,logo}=req.body;
-    const file=req.file;
-    const s3 = new AWS.S3();
-    let filelocation="";
-    const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-      };
-      s3.upload(params, async(err, data) => {
-        if (err) {
-          console.error(err);
-        } else {
-            console.log('file url',data.Location);
-            filelocation=data.Location;
-            pool.connect();
-            pool.query('insert into tblstudent(name,dateofbirth,schoolid,roomid,parentid,picurl)values($1,$2,$3,$4,$5,$6) RETURNING *',[name,dateofbirth,schoolid,roomid,parentid,filelocation],(err,result)=>{
-                if(err){console.log(err); throw err}else{
-                    res.status(200).json({
-                        statusCode:200,
-                        status:true,
-                        message:'record Inserted',
-                        data:result.rows[0],
-                    });
-                }
-            });  
-        }
-    });
-});
-
-app.put('/api/student/editStudent/:id',upload.single('logo'),(req, res) =>{
-    const{name,dateofbirth,schoolid,roomid,parentid,logo}=req.body;
-    const id = parseInt(req.params.id);
-    console.log(req.body);
-    const file=req.file;
-    const s3 = new AWS.S3();
-    let filelocation="";
-    const params = {
-        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-        Key: file.originalname,
-        Body: file.buffer,
-    };
-    s3.upload(params, async(err, data) => {
-        if (err) {
-          console.error(err);
-        } else {
-            console.log('file url',data.Location);
-            filelocation=data.Location;
-            pool.connect();
-            pool.query('update tblstudent set name=$1,dateofbirth=$2,schoolid=$3,roomid=$4,parentid=$5,picurl=$6 where id='+id+' RETURNING *',[name,dateofbirth,schoolid,roomid,parentid,location],(err,result)=>{
-                if(err){console.log(err); throw err}else{
-                    res.status(200).json({
-                        statusCode:200,
-                        status:true,
-                        message:'record Updated',
-                        data:result.rows[0],
-                    });
-                }
-            });
-        }
-    });    
-});
 
 
 //code to connect with the subAdmin services 
-app.get('/api/subadmin/subadminlist',tblSubadmin.getSubadmin);
-app.delete('/api/subadmin/deleteSubadmin/:id',tblSubadmin.deleteSubadmin);
-app.get('/api/subadmin/getSubadminById/:id',tblSubadmin.getSubadminById);
-app.post('/api/subadmin/addSubadmin',upload.single('picurl'),(req, res) =>{
-    const{name,contact,address,email,username,schoolid,picurl}=req.body;
-    
-    const userName=req.body.username;
-    const userRole="subAdmin";
-    const userPassword=""+generateRandomPassword(12);
-
-    const mailOptions = {
-        from: 'chiragmahajan9019@gmail.com',
-        to: 'hk1898180@gmail.com',
-        subject: 'Hello from Node.js',
-        text: 'This is the body of the email.'
-      };
-      
-      // Send the email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('Error occurred while sending email:', error.message);
-        } else {
-          console.log('Email sent successfully!');
-          console.log('Message ID:', info.messageId);
-        }
-      });
-      
-    
-    pool.connect();
-    pool.query('insert into users(name,role,password)values($1,$2,$3)RETURNING *',[userName,userRole,userPassword],(err,result)=>{
-        if(err){console.log(err); throw err}
-    });
-    
-    pool.query('insert into subadmin(name,contact,address,email,username,password,schoolid,picurl)values($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',[name,contact,address,email,username,userPassword,schoolid,picurl],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Inserted',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-
-app.put('/api/subadmin/editSubadmin/:id',upload.single('picurl'),(req, res) =>{
-    const{name,contact,address,email,username,password,schoolId,picurl}=req.body;
-    const id = parseInt(req.params.id);
-    console.log(req.body);
-    pool.connect();
-    pool.query('update subadmin set name=$1,contact=$2,address=$3,email=$4,username=$5,password=$6,schoolid=$7,picurl=$8 where id='+id+' RETURNING *',[name,contact,address,email,username,password,schoolId,picurl],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-
+app.use('/api/subadmin',getSubadmin);
+app.use('/api/subadmin',deleteSubadmin);
+app.use('/api/subadmin',getSubadminById);
+app.use('/api/subadmin',addSubadmin);
+app.use('/api/subadmin',editSubadmin);
 
 //code to connect with the claimed services 
-app.get('/api/claimedService/claimedServiceList',tblObtainedServcie.getClaimService);
-app.delete('/api/claimedService/deleteService/:id',tblObtainedServcie.deleteClaimedService);
-app.get('/api/claimedService/ServiceById/:id',tblObtainedServcie.getClaimedServiceById);
-app.post('/api/claimedService/claimedService',upload.none(),(req, res) =>{
-    const{serviceid,status,schoolid,obtainingdate}=req.body;
-    console.log(req.body);
-    pool.connect();
-    pool.query('insert into obtainedservice(serviceid,status,schoolid,obtainingdate)values($1,$2,$3,$4) RETURNING *',[serviceid,status,schoolid,obtainingdate],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'Servcie Obtained',
-                data:result.rows[0],
-            });
-        }
-    });    
+app.use('/api/claimedService',claimedServiceList);
+app.use('/api/claimedService',claimedServiceDetails);
+app.use('/api/claimedService',deleteClaimedService);
+app.use('/api/claimedService',deactivateService);
+app.use('/api/claimedService',addNewService);
+app.use('/api/claimedService',editNewService);
+
+
+
+
+app.use('/api/message',getChatRoomId);
+
+//set the working of the IO 
+const io=socketIO(server);
+
+io.on("connection",(socket)=>{
+    console.log('socket ID---');
+
+    //when()ever the users join the room 
+    socket.on('join_room',async(data)=>{
+        socket.join(data);
+        console.log('socket Id ',socket.id,'--',data);
+        const{senderid,recieverid}=data;
+        const sendrid=parseInt(senderid);
+        const recid=parseInt(recieverid);
+        await pool.query('select * from tblmessage where senderid=$1 and recieverid=$2 or senderid=$3 and recieverid=$4',[sendrid,recid,recid,sendrid],(err,result)=>{
+            if(err){console.log(err);
+                return false;
+            }else{
+                io.emit("receive_message",result.rows);
+                console.log(data.roomid,'send data to front end app ');
+            }
+        });
+    });
+
+    socket.on('send_message',async (data)=>{
+        //whenever user hit the message button pass the data 
+        ///staff and admin can chat with parents and their id will be consider as school id 
+        console.log(data);
+
+        const resp=socketMsg.saveMessage(data);
+        
+        const{senderid,message,recieverid}=data;
+
+        const sendrid=parseInt(senderid);
+        const recid=parseInt(recieverid);
+        console.log(senderid,'----',recieverid);
+        let json = [data]
+        io.emit("receive_message",json);
+    });
+    //when the socket is disconnected 
+    socket.on('disconnect',()=>{
+        console.log('disconnected with the server ',socket.id);
+    });
 });
 
-app.put('/api/claimedService/editClaimedService/:id',upload.none(),(req, res) =>{
-    const{serviceid,status,schoolid,obtainingdate}=req.body;
-    const id = parseInt(req.params.id);
-    console.log(req.body);
-    pool.connect();
-    pool.query('update obtainedservice set serviceid=$1,status=$2,schoolid=$3,obtainingdate=$4 where id='+id+' RETURNING *',[serviceid,status,schoolid,obtainingdate],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-
-app.put('/api/claimedService/deactivateService/:id',upload.none(),(req, res) =>{
-    const id = parseInt(req.params.id);
-    const status=req.body.status;
-    console.log(status);
-    pool.connect();
-    pool.query('update obtainedservice set status=$1 where id='+id+' RETURNING *',[status],(err,result)=>{
-        if(err){console.log(err); throw err}else{
-            res.status(200).json({
-                msg:'record Updated',
-                data:result.rows[0],
-            });
-        }
-    });    
-});
-
-app.listen(PORT,()=>{
+server.listen(PORT,()=>{
     console.log('server is running');
 });
+
+
+app.use('/api/staff',staffCheckIn);
+app.use('/api/staff',staffCheckOut);
+app.use('/api/staff',getstaffStatus);
+
+app.use('/api/Notice',addNotice);
+app.use('/api/Notice',editNotice);
+app.use('/api/Notice',deleteNotice);
+app.use('/api/Notice',getNoticeBySchoolId);
+
+app.use('/api/student',studentCheckIn);
+app.use('/api/student',studentCheckOut);
+app.use('/api/student',getStudentStatus);
+
+
+
+app.use('/api/video',addVideo);
+app.use('/api/video',editVideo);
+app.use('/api/video',deleteVideo);
+app.use('/api/video',getVideoByRoomId);
+app.use('/api/video',getVideoBySchoolId);
+
+//nextval('testsubadmin'::regclass)
+   
