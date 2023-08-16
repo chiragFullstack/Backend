@@ -17,6 +17,7 @@ const pool=new Pool({
     password:'wP322$pSIdsc',
     port:5432
 });
+
 const getClaimService=(req,res)=>{
     pool.query('select obtainedservice.id, tblschool.name, tblservice.servicename, obtainedservice.obtainingdate,obtainedservice.status from obtainedservice inner join tblschool on tblschool.id=obtainedservice.schoolid inner join tblservice on tblservice.id=obtainedservice.serviceid',(err,result)=>{
         if(err){console.log(err); throw err}

@@ -10,13 +10,12 @@ const socketIO=require('socket.io');
 
 const app=express();
 
-
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
 const server=http.createServer(app);
 
-const PORT=process.env.PORT;
+const PORT=process.env.PORT|5000;
 const Pool=require("pg").Pool
 
 
@@ -102,6 +101,17 @@ const deleteVideo=require('./routes/video/deleteVideo');
 
 const getChatRoomId=require('./routes/chatmessage/getChatRoomId');
 
+
+
+const addReport=require('./routes/studentActivityReport/addReport');
+const getDailyreport=require('./routes/studentActivityReport/getDailyReport');
+const getFullreport=require('./routes/studentActivityReport/getFullReport');
+
+app.use('/api/report',addReport);
+app.use('/api/report',getDailyreport);
+app.use('/api/report',getFullreport);
+
+
 //this is the folder where we need to 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -159,8 +169,6 @@ app.use('/api/School',addSchool);
 app.use('/api/School',editSchool);
 
 
-
-
 //service details 
 app.use('/api/service',allService);
 app.use('/api/service',deleteService);
@@ -205,10 +213,11 @@ app.use('/api/claimedService',deactivateService);
 app.use('/api/claimedService',addNewService);
 app.use('/api/claimedService',editNewService);
 
-
-
-
 app.use('/api/message',getChatRoomId);
+
+app.use('/api/report',addReport);
+app.use('/api/report',getDailyreport);
+app.use('/api/report',getFullreport);
 
 //set the working of the IO 
 const io=socketIO(server);
@@ -281,4 +290,3 @@ app.use('/api/video',getVideoByRoomId);
 app.use('/api/video',getVideoBySchoolId);
 
 //nextval('testsubadmin'::regclass)
-   
