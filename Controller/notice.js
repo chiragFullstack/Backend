@@ -36,7 +36,8 @@ const getNoticeListBySchool=(req,res)=>{
             res.status(400).json({
                 message:err,
                 statusCode:400,
-                status:false
+                status:false,
+                data:[]
             });
         }
         else{
@@ -62,7 +63,8 @@ const deleteNoticeBySchool=(req,res)=>{
             res.status(400).json({
                 message:err,
                 statusCode:400,
-                status:false,  
+                status:false, 
+                data:[] 
             });
         }
         else{

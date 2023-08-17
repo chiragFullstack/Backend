@@ -125,7 +125,41 @@ const studentCheckOut = (req, res) => {
     });
 }
 
+const getStudentAttendenceReport = async (req, res) => {
+    const studentid =parseInt(req.query.id);
+    const fromDate=req.query.fromDate;
+    const toDate=req.query.toDate;
+    let qry='';
+    if(studentid!='' && fromDate!=''){
+        qry=`select *  from tblstudentcheckin where studentid=${studentid} and attendenceDate=${fromDate}`; 
+    }
+    if(studentid!='' && fromDate!='' && toDate!=''){
+        qry=`select *  from tblstudentcheckin where studentid=${studentid} and attendenceDate>=${fromDate} and attendenceDate<=${toDate}`;
+    }
+   
+    console.log(qry);
+    await pool.query(qry, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.status(err.code).json({
+                status: true,
+                statusCode: err.code,
+                message: err.message,
+                data:[]
+            });
+        }
+        else {
+            res.status(200).json({
+                status: true,
+                statusCode: 200,
+                message: 'Student Attendence Status with single ',
+                data: result.rows
+            });
+        }
+    });
+}
+
 
 module.exports = {
-    studentCheckIn, studentCheckOut, getStudentStatus
+    studentCheckIn, studentCheckOut, getStudentStatus,getStudentAttendenceReport
 }

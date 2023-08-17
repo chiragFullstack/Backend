@@ -92,6 +92,7 @@ const getNoticeBySchoolId=require('./routes/notice/noticeList');
 const studentCheckIn=require('./routes/studentAttendence/studentCheckIn');
 const studentCheckOut=require('./routes/studentAttendence/studentCheckOut');
 const getStudentStatus=require('./routes/studentAttendence/getStudentStatus');
+const getStudentReport=require('./routes/studentAttendence/getStudentAttendenceReport');
 
 const addVideo=require('./routes/video/addVideo');
 const editVideo=require('./routes/video/editVideo');
@@ -280,7 +281,7 @@ app.use('/api/Notice',getNoticeBySchoolId);
 app.use('/api/student',studentCheckIn);
 app.use('/api/student',studentCheckOut);
 app.use('/api/student',getStudentStatus);
-
+app.use('/api/student',getStudentReport);
 
 
 app.use('/api/video',addVideo);

@@ -31,7 +31,8 @@ const saveReport=async(req, res) =>{
             res.status(400).json({
                 statusCode:400,
                 message:err,
-                status:false
+                status:false,
+                data:[]
             });
         }
         else{
@@ -58,7 +59,8 @@ const getReport=async(req,res)=>{
             res.status(400).json({
                 statusCode:400,
                 message:err,
-                status:false
+                status:false,
+                data:[]
             });
         }
         else{
@@ -83,7 +85,8 @@ const getReportByDate=async(req,res)=>{
             res.status(400).json({
                 statusCode:400,
                 message:err,
-                status:false
+                status:false,
+                data:[]
             });
         }
         else{

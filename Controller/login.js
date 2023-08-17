@@ -37,7 +37,7 @@ const chkLogin= async(req, res) =>{
                         usertype:userType,
                         username:name
                     }
-                    responseData = record;
+                    responseData.push(record);
                 }else if(userType=='staff'){
                     const resultsub = await pool.query('SELECT id,schoolid,principalid,name FROM tblstaff WHERE username = $1', [username]);
                     userId= resultsub.rows[0].id;
@@ -52,7 +52,7 @@ const chkLogin= async(req, res) =>{
                         username:name,
                         principalid:principalId
                     }
-                    responseData = record;
+                    responseData.push(record) ;
                 }else if(userType=='parent'){
                     const resultsub = await pool.query('SELECT name,id,schoolid FROM parent WHERE username = $1', [username]);
                     userId= resultsub.rows[0].id;
@@ -64,7 +64,7 @@ const chkLogin= async(req, res) =>{
                         username:name,
                         usertype:userType
                     }
-                    responseData = record;
+                    responseData.push(record) ;
                     console.log(userId, schoolId,principalId);
                 }
                 console.log('responseData',responseData)
