@@ -19,7 +19,6 @@ const PORT=process.env.PORT|5000;
 const Pool=require("pg").Pool
 
 
-
 const chkCred=require('./routes/Login/login');
 const checkUser=require('./routes/Login/checkusername');
 

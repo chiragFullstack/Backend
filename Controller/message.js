@@ -15,7 +15,8 @@ const pool=new Pool({
 const saveMessage=async(data)=>{
     const currentDateTime = moment();
     // Format the date and time
-    const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
+    var utcMoment = moment.utc();
+    const formattedDateTime = new Date( utcMoment.format() );
     const{senderid,message,recieverid, sendertype,roomid}=data;
     //const msgdate=new Date().toISOString();
     //console.log(data);
