@@ -2,7 +2,7 @@ const Pool=require("pg").Pool;
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ dest: 'uploads/' });
-
+const moment = require('moment');
 const pool=new Pool({
     user:'developer',
     host:'54.172.2.94',
@@ -13,16 +13,19 @@ const pool=new Pool({
 
 
 const saveMessage=async(data)=>{
+    const currentDateTime = moment();
+    // Format the date and time
+    const formattedDateTime = currentDateTime.format('YYYY-MM-DD HH:mm:ss');
     const{senderid,message,recieverid, sendertype,roomid}=data;
-    const msgdate=new Date().toISOString();
-    console.log(data);
+    //const msgdate=new Date().toISOString();
+    //console.log(data);
     let schoolid= roomid.split('_');
     let sender_id = parseInt(senderid)
     let parent_id = parseInt(schoolid[1])
     let reciever_id = parseInt(recieverid)
     let school_id=parseInt(schoolid[0]);
     pool.connect();
-    pool.query('insert into tblmessage(senderid,message,recieverid,msgdate,sendertype,chatroomid,schoolid,parentid)values($1,$2,$3,$4,$5,$6,$7,$8)RETURNING *',[sender_id,message,reciever_id,msgdate,sendertype,roomid,school_id,parent_id],(err,result)=>{
+    pool.query('insert into tblmessage(senderid,message,recieverid,msgdate,sendertype,chatroomid,schoolid,parentid)values($1,$2,$3,$4,$5,$6,$7,$8)RETURNING *',[sender_id,message,reciever_id,formattedDateTime,sendertype,roomid,school_id,parent_id],(err,result)=>{
         if(err){console.log(err);
           return false;
         }else{

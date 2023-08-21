@@ -238,103 +238,204 @@ let dataChild=[];
   let studentStatus=[];
   let idx=0;
 
+//   const AWS = require('aws-sdk');
+// const s3 = new AWS.S3();
 
-function getStudentCheckStatus(idx){
-    console.log('above function ',idx);
-    let id=parseInt(idx);
-    let currentDate=new Date();
-    let status=false;
+function getStudentCheckStatus(idx) {
+    console.log('above function ', idx);
+    const id = parseInt(idx);
+    let currentDate = new Date();
+    let status = false;
     return new Promise((resolve, reject) => {
-     pool.query('select * from tblstudentcheckin where studentid=$1',[id],(err1,result1)=>{
-        if(err1){
-            reject(err1);
-            return;
-        }else{
-            if(result1.rows.length>0){
-                status=result1.rows[0].attendence;
-                resolve(status);
-            }else{
-                status=false;
-                resolve(status);
+        pool.query('select * from tblstudentcheckin where studentid=$1', [id], (err1, result1) => {
+            if (err1) {
+                reject(err1);
+                return;
+            } else {
+                if (result1.rows.length > 0) {
+                    status = result1.rows[0].attendence;
+                    resolve(status);
+                } else {
+                    status = false;
+                    resolve(status);
+                }
             }
-        }
+        });
     });
-   });
 }
 
-const getStudentBySchoolId=async (req,res)=>{
+async function fetchStudentDataWithCheckStatus(result) {
+    const dataChild = [];
+    const s3 = new AWS.S3();
+    for (let x = 0; x < result.rows.length; x++) {
+        const student = result.rows[x];
+        let pic_url = '';
+
+        if (student.picurl.toString() !== "") {
+            const idx = student.picurl.toString().lastIndexOf('/');
+            const Name = student.picurl.toString().slice(idx + 1, student.picurl.toString().length);
+            const params = {
+                Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+                Key: Name,
+                Expires: 364 * 24 * 60 * 60
+            };
+            const signedUrl = s3.getSignedUrl('getObject', params);
+            pic_url = signedUrl;
+        }
+
+        const Stustatus = await getStudentCheckStatus(parseInt(student.id));
+
+        const rec = {
+            'id': student.id,
+            'name': student.studentname,
+            'parentid': student.parentid,
+            'roomid': student.roomid,
+            'schoolid': student.schoolid,
+            'picurl': pic_url,
+            'roomname': student.name,
+            'dateofbirth': student.dateofbirth,
+            'gender': student.gender,
+            'checkinStatus': Stustatus
+        };
+
+        dataChild.push(rec);
+        console.log('status ---', rec);
+    }
+
+    return dataChild;
+}
+
+const getStudentBySchoolId = async (req, res) => {
     const id = parseInt(req.query.id);
-    const currentDate=new Date();
-    let count=0, totalRows=0;
-    await pool.query('select tblstudent.id,tblstudent.studentname,tblstudent.parentid,tblstudent.schoolid,tblstudent.picurl,tblstudent.roomid,tblclass.name from tblstudent inner join tblclass on tblstudent.roomid=tblclass.id  where tblstudent.schoolid=$1',[id],(err,result)=>{
-        if(err){console.log(err); throw err}
-        else{
-            if(result.rows.length>0){
-            const s3 = new AWS.S3();
-            totalRows=result.rows.length;
-            console.log('total rows',totalRows);
-            for(let x=0;x<result.rows.length;x++){
-                count++;
-                let pic_url='';
-                let status=false;
-                if(result.rows[x].picurl.toString()!=""){
-                    const idx=result.rows[x].picurl.toString().lastIndexOf('/');
-                    const Name=result.rows[x].picurl.toString().slice(idx+1,result.rows[x].picurl.toString().length); 
-                    const params = {
-                        Bucket: 'webdaycarebucket', // replace with your S3 bucket name
-                        Key: Name,
-                        Expires:364*24*60*60
-                    };
-                    const signedUrl =s3.getSignedUrl('getObject', params);
-                    pic_url=signedUrl;
-                }else{
-                    pic_url='';
-                }
-                let Stustatus=getStudentCheckStatus(parseInt(result.rows[x].id));
-                Stustatus.then((res)=>{
-                    let rec={
-                        'id':result.rows[x].id,
-                        'name':result.rows[x].studentname,
-                        'parentid':result.rows[x].parentid,
-                        'roomid':result.rows[x].roomid,
-                        'schoolid':result.rows[x].schoolid,
-                        'picurl':pic_url,
-                        'roomname':result.rows[x].name,
-                        'dateofbirth':result.rows[x].dateofbirth,
-                        'gender':result.rows[x].gender,
-                        'checkIn':res
-                    }
-                    dataChild.push(rec);
-                    console.log('status ---',rec);
-                });
-            }
-            if(count==totalRows && count>0){
-                console.log(count ,'below function--', totalRows);
-                console.log('----',dataChild);
-               let intervalId=setInterval(function(){
-                    if(dataChild.length==totalRows){
-                        res.status(200).json({
-                            message:'true',
-                            statusCode:200,
-                            data:dataChild,
-                            status: true
-                        });
-                        clearInterval(intervalId);
-                    }
-                },1000);       
-            }
-          }else{
+    let count = 0;
+
+    try {
+        const result = await pool.query('select tblstudent.id, tblstudent.studentname, tblstudent.parentid, tblstudent.schoolid, tblstudent.picurl, tblstudent.roomid, tblclass.name from tblstudent inner join tblclass on tblstudent.roomid = tblclass.id where tblstudent.schoolid = $1', [id]);
+
+        if (result.rows.length > 0) {
+            const dataChild = await fetchStudentDataWithCheckStatus(result);
+
             res.status(200).json({
-                message:'no record found',
-                statusCode:200,
-                data:dataChild,
+                message: 'true',
+                statusCode: 200,
+                data: dataChild,
                 status: true
             });
-          }
+        } else {
+            res.status(200).json({
+                message: 'no record found',
+                statusCode: 200,
+                data: [],
+                status: true
+            });
         }
-    });
-    
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            message: 'error occurred',
+            statusCode: 500,
+            status: false
+        });
+    }
 }
+
+
+// function getStudentCheckStatus(idx){
+//     console.log('above function ',idx);
+//     let id=parseInt(idx);
+//     let currentDate=new Date();
+//     let status=false;
+//     return new Promise((resolve, reject) => {
+//      pool.query('select * from tblstudentcheckin where studentid=$1',[id],(err1,result1)=>{
+//         if(err1){
+//             reject(err1);
+//             return;
+//         }else{
+//             if(result1.rows.length>0){
+//                 status=result1.rows[0].attendence;
+//                 resolve(status);
+//             }else{
+//                 status=false;
+//                 resolve(status);
+//             }
+//         }
+//     });
+//    });
+// }
+
+// const getStudentBySchoolId=async (req,res)=>{
+//     const id = parseInt(req.query.id);
+//     // const currentDate=new Date();
+//     let count=0, totalRows=0;
+//     await pool.query('select tblstudent.id,tblstudent.studentname,tblstudent.parentid,tblstudent.schoolid,tblstudent.picurl,tblstudent.roomid,tblclass.name from tblstudent inner join tblclass on tblstudent.roomid=tblclass.id  where tblstudent.schoolid=$1',[id],(err,result)=>{
+//         if(err){console.log(err); throw err}
+//         else{
+//             if(result.rows.length>0){
+//             const s3 = new AWS.S3();
+//             totalRows=result.rows.length;
+//             console.log('total rows',totalRows);
+//             for(let x=0;x<result.rows.length;x++){
+//                 count++;
+//                 let pic_url='';
+//                 let status=false;
+//                 if(result.rows[x].picurl.toString()!=""){
+//                     const idx=result.rows[x].picurl.toString().lastIndexOf('/');
+//                     const Name=result.rows[x].picurl.toString().slice(idx+1,result.rows[x].picurl.toString().length); 
+//                     const params = {
+//                         Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+//                         Key: Name,
+//                         Expires:364*24*60*60
+//                     };
+//                     const signedUrl =s3.getSignedUrl('getObject', params);
+//                     pic_url=signedUrl;
+//                 }else{
+//                     pic_url='';
+//                 }
+//                 let Stustatus=getStudentCheckStatus(parseInt(result.rows[x].id));
+//                 Stustatus.then((res)=>{
+//                     let rec={
+//                         'id':result.rows[x].id,
+//                         'name':result.rows[x].studentname,
+//                         'parentid':result.rows[x].parentid,
+//                         'roomid':result.rows[x].roomid,
+//                         'schoolid':result.rows[x].schoolid,
+//                         'picurl':pic_url,
+//                         'roomname':result.rows[x].name,
+//                         'dateofbirth':result.rows[x].dateofbirth,
+//                         'gender':result.rows[x].gender,
+//                         'checkIn':res
+//                     }
+//                     dataChild.push(rec);
+//                     console.log('status ---',rec);
+//                 });
+//             }
+//             if(count==totalRows && count>0){
+//                 console.log(count ,'below function--', totalRows);
+//                 console.log('----',dataChild);
+//                let intervalId=setInterval(function(){
+//                     if(dataChild.length==totalRows){
+//                         res.status(200).json({
+//                             message:'true',
+//                             statusCode:200,
+//                             data:dataChild,
+//                             status: true
+//                         });
+//                         clearInterval(intervalId);
+//                     }
+//                 },1000);       
+//             }
+//           }else{
+//             res.status(200).json({
+//                 message:'no record found',
+//                 statusCode:200,
+//                 data:dataChild,
+//                 status: true
+//             });
+//           }
+//         }
+//     });
+    
+// }
 
 
 const addStudent=(req, res) =>{
