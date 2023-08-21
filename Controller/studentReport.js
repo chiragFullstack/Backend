@@ -81,7 +81,6 @@ const getReport=async(req,res)=>{
             });
         }
         else{
-           
             res.status(200).json({
                 statusCode:200,
                 message:'get full report',

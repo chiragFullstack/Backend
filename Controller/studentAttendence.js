@@ -127,39 +127,55 @@ const studentCheckOut = (req, res) => {
 
 const getStudentAttendenceReport = async (req, res) => {
     const studentid =parseInt(req.query.id);
-    const fromDate=req.query.fromDate;
-    const toDate=req.query.toDate;
+    const fromDate=req.query.fromdate;
+    const toDate=req.query.todate;
     let qry='';
-    if(studentid!='' && fromDate!=''){
-        qry=`select *  from tblstudentcheckin where studentid=${studentid} and attendenceDate=${fromDate}`; 
+    if(studentid!='' && fromDate!='' && toDate==''){
+        await pool.query('select *  from tblstudentcheckin where studentid=$1 and attendenceDate=$2', [studentid,fromDate],(err, result) => {
+            if (err) {
+                console.log(err);
+                res.status(err.code).json({
+                    status: true,
+                    statusCode: err.code,
+                    message: err.message,
+                    data:[]
+                });
+            }
+            else {
+                res.status(200).json({
+                    status: true,
+                    statusCode: 200,
+                    message: 'Student Attendence Status with single ',
+                    data: result.rows 
+                });
+            }
+        });
     }
     if(studentid!='' && fromDate!='' && toDate!=''){
-        qry=`select *  from tblstudentcheckin where studentid=${studentid} and attendenceDate>=${fromDate} and attendenceDate<=${toDate}`;
+        await pool.query('select *  from tblstudentcheckin where studentid=$1 and attendenceDate>$2 and attendenceDate<$3', [studentid,fromDate,toDate],(err, result) => {
+            if (err) {
+                console.log(err);
+                res.status(err.code).json({
+                    status: true,
+                    statusCode: err.code,
+                    message: err.message,
+                    data:[]
+                });
+            }
+            else {
+                res.status(200).json({
+                    status: true,
+                    statusCode: 200,
+                    message: 'Student Attendence Status with single ',
+                    data: result.rows 
+                });
+            }
+        });
     }
    
-    console.log(qry);
-    await pool.query(qry, (err, result) => {
-        if (err) {
-            console.log(err);
-            res.status(err.code).json({
-                status: true,
-                statusCode: err.code,
-                message: err.message,
-                data:[]
-            });
-        }
-        else {
-            res.status(200).json({
-                status: true,
-                statusCode: 200,
-                message: 'Student Attendence Status with single ',
-                data: result.rows
-            });
-        }
-    });
+    
+  
 }
-
-
 module.exports = {
     studentCheckIn, studentCheckOut, getStudentStatus,getStudentAttendenceReport
 }
