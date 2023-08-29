@@ -48,16 +48,16 @@ const saveReport=async(req, res) =>{
                     else{
                         res.status(200).json({
                             statusCode:200,
-                            message:'Room Record Inserted',
+                            message:'Reports Saved',
                             data:result.rows[0],
                             status:true
                         });
                     }
                 });
             } else {
-                res.status(200).json({
-                    statusCode:200,
-                    message:'Record not found ',
+                res.status(400).json({
+                    statusCode:400,
+                    message:'student id not found ',
                     data:[],
                     status:false
                 });

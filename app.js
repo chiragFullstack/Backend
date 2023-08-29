@@ -236,7 +236,7 @@ io.on("connection",(socket)=>{
             if(err){console.log(err);
                 return false;
             }else{
-                io.emit("receive_message",result.rows);
+                io.to(socket.id).emit("receive_message",result.rows);
                 console.log(data.roomid,'send data to front end app ');
             }
         });
