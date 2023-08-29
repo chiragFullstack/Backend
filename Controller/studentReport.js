@@ -9,13 +9,16 @@ const pool=new Pool({
 });
 
 const saveReport=async(req, res) =>{
-    const{schoolId,studentId,roomId,reportdate,naptime, napduration, mealtime,mealstype, notes, activity,checkuptime, checkupstatus }=req.body;
+    const{schoolId,studentId,roomId,naptime, napduration, mealtime,mealstype, notes, activity,checkuptime, checkupstatus }=req.body;
     pool.connect();
     let schoolName='';
     let studentName='';
     let roomName='';
     let parentName='';
-    let currentDate=new Date();
+    const currentDateTime = moment();
+    // Format the date and time
+    var utcMoment = moment.utc();
+    const formattedDateTime = new Date( utcMoment.format() );
     let student_Id=parseInt(studentId);
     const resultsub = await pool.query('select tblschool.name as schoolname,tblstudent.studentname, parent.name as parentname,tblclass.name as roomname from tblstudent inner join tblschool on tblschool.id=tblstudent.schoolid inner join parent on parent.schoolid=tblschool.id inner join tblclass  on tblclass.id=tblstudent.roomid where tblstudent.id=$1',[student_Id],(err,result)=>{
         if(err){
@@ -36,7 +39,7 @@ const saveReport=async(req, res) =>{
                     roomName=row.roomname;
                     console.log(row);
                 }
-                pool.query('insert into studentactivityreport(studentname,schoolname,roomname,parentname,reportdate, naptime,napduration,mealtime,mealtype,notes,activity,checkuptime,checkupstatus,studentid)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *',[studentName,schoolName,roomName,parentName,currentDate,naptime,napduration, mealtime, mealstype, notes, activity, checkuptime, checkupstatus,studentId],(err,result)=>{
+                pool.query('insert into studentactivityreport(studentname,schoolname,roomname,parentname,reportdate, naptime,napduration,mealtime,mealtype,notes,activity,checkuptime,checkupstatus,studentid)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *',[studentName,schoolName,roomName,parentName,formattedDateTime,naptime,napduration, mealtime, mealstype, notes, activity, checkuptime, checkupstatus,studentId],(err,result)=>{
                     if(err){console.log(err); 
                         res.status(400).json({
                             statusCode:400,
