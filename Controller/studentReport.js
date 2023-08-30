@@ -74,7 +74,7 @@ const saveReport=async(req, res) =>{
 const getReport=async(req,res)=>{
     const studentId=parseInt(req.query.id);
     const reportDate=new Date(req.query.date);
-    await pool.query('select * from studentactivityreport where studentid=$1 and reportdate=$2',[studentId,reportDate],(err,result)=>{
+    await pool.query('select * from studentactivityreport where studentid=$1 and reportdate>$2',[studentId,reportDate],(err,result)=>{
         if(err){
             console.log(err);
             res.status(400).json({
@@ -122,4 +122,113 @@ const getReportByDate=async(req,res)=>{
      });
 }
 
-module.exports={saveReport,getReport,getReportByDate};
+const getReportByParentId=async(req,res)=>{
+    console.log(req.query.id,'---',typeof(req.query.fromdate));
+    const parentId=parseInt(req.query.id);
+    const fromDate=new Date(req.query.fromdate);
+    const toDate=new Date(req.query.todate);
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[parentId,fromDate,toDate],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('match ed ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+const getTodayReportByParentId=async(req,res)=>{
+    console.log(req.query.id,'---',typeof(req.query.fromdate));
+    const parentId=parseInt(req.query.id);
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate=$2 ',[parentId,req.query.fromdate],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('match ed ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+
+const getReportByRoomId=async(req,res)=>{
+    console.log(req.query.id,'---',typeof(req.query.fromdate));
+    const roomId=parseInt(req.query.id);
+    const fromDate=new Date(req.query.fromdate);
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate=$2',[roomId,req.query.fromdate],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('match ed ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+const getFullReportByRoomId=async(req,res)=>{
+    console.log(req.query.id,'---',typeof(req.query.fromdate));
+    const roomId=parseInt(req.query.id);
+    const fromDate=new Date(req.query.fromdate);
+    const toDate=new Date(req.query.todate);
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[roomId,fromDate,toDate],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('match ed ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+module.exports={
+    saveReport,getReport,getReportByDate,getReportByParentId,getReportByRoomId,
+    getFullReportByRoomId,getTodayReportByParentId
+};

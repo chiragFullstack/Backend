@@ -106,6 +106,10 @@ const getChatRoomId=require('./routes/chatmessage/getChatRoomId');
 const addReport=require('./routes/studentActivityReport/addReport');
 const getDailyreport=require('./routes/studentActivityReport/getDailyReport');
 const getFullreport=require('./routes/studentActivityReport/getFullReport');
+const getReportByParentId=require('./routes/studentActivityReport/getReportByParentId');
+const getReportByRoomId=require('./routes/studentActivityReport/getReportByRoomId');
+const getFullReportByRoomId=require('./routes/studentActivityReport/getFullReportByRoomId');
+const getTodayReportByParentId=require('./routes/studentActivityReport/getTodayReportByParentId');
 
 app.use('/api/report',addReport);
 app.use('/api/report',getDailyreport);
@@ -218,6 +222,11 @@ app.use('/api/message',getChatRoomId);
 app.use('/api/report',addReport);
 app.use('/api/report',getDailyreport);
 app.use('/api/report',getFullreport);
+app.use('/api/report',getReportByParentId);
+app.use('/api/report',getReportByRoomId);
+app.use('/api/report',getFullReportByRoomId);
+app.use('/api/report',getTodayReportByParentId);
+
 
 //set the working of the IO 
 const io=socketIO(server);
