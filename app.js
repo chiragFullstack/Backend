@@ -110,10 +110,11 @@ const getReportByParentId=require('./routes/studentActivityReport/getReportByPar
 const getReportByRoomId=require('./routes/studentActivityReport/getReportByRoomId');
 const getFullReportByRoomId=require('./routes/studentActivityReport/getFullReportByRoomId');
 const getTodayReportByParentId=require('./routes/studentActivityReport/getTodayReportByParentId');
+const getBirthReportBySchoolId=require('./routes/studentActivityReport/getBirthReportBySchoolId');
+const getContactReportBySchoolId=require('./routes/studentActivityReport/getContactReportBySchoolId');
 
-app.use('/api/report',addReport);
-app.use('/api/report',getDailyreport);
-app.use('/api/report',getFullreport);
+
+
 
 
 //this is the folder where we need to 
@@ -219,6 +220,8 @@ app.use('/api/claimedService',editNewService);
 
 app.use('/api/message',getChatRoomId);
 
+
+
 app.use('/api/report',addReport);
 app.use('/api/report',getDailyreport);
 app.use('/api/report',getFullreport);
@@ -226,6 +229,8 @@ app.use('/api/report',getReportByParentId);
 app.use('/api/report',getReportByRoomId);
 app.use('/api/report',getFullReportByRoomId);
 app.use('/api/report',getTodayReportByParentId);
+app.use('/api/report',getBirthReportBySchoolId);
+app.use('/api/report',getContactReportBySchoolId);
 
 
 //set the working of the IO 

@@ -10,7 +10,7 @@ const pool=new Pool({
 });
 
 const saveReport=async(req, res) =>{
-    const{schoolId,studentId,roomId,naptime, napduration, mealtime,mealstype, notes, activity,checkuptime, checkupstatus }=req.body;
+    const{schoolId,studentId,roomId,naptime, napduration, mealtime,mealstype, notes, activity,checkuptime, checkupstatus,allergystatus,allergydescription }=req.body;
     pool.connect();
     let schoolName='';
     let studentName='';
@@ -40,7 +40,7 @@ const saveReport=async(req, res) =>{
                     roomName=row.roomname;
                     console.log(row);
                 }
-                pool.query('insert into studentactivityreport(studentname,schoolname,roomname,parentname,reportdate, naptime,napduration,mealtime,mealtype,notes,activity,checkuptime,checkupstatus,studentid)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *',[studentName,schoolName,roomName,parentName,formattedDateTime,naptime,napduration, mealtime, mealstype, notes, activity, checkuptime, checkupstatus,studentId],(err,result)=>{
+                pool.query('insert into studentactivityreport(studentname,schoolname,roomname,parentname,reportdate, naptime,napduration,mealtime,mealtype,notes,activity,checkuptime,checkupstatus,studentid,allergystatus,allergydescription)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *',[studentName,schoolName,roomName,parentName,formattedDateTime,naptime,napduration, mealtime, mealstype, notes, activity, checkuptime, checkupstatus,studentId,allergystatus,allergydescription],(err,result)=>{
                     if(err){console.log(err); 
                         res.status(400).json({
                             statusCode:400,
@@ -127,7 +127,7 @@ const getReportByParentId=async(req,res)=>{
     const parentId=parseInt(req.query.id);
     const fromDate=new Date(req.query.fromdate);
     const toDate=new Date(req.query.todate);
-    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[parentId,fromDate,toDate],(err,result)=>{
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[parentId,fromDate,toDate],(err,result)=>{
         if(err){
             console.log(err);
             res.status(400).json({
@@ -152,7 +152,7 @@ const getReportByParentId=async(req,res)=>{
 const getTodayReportByParentId=async(req,res)=>{
     console.log(req.query.id,'---',typeof(req.query.fromdate));
     const parentId=parseInt(req.query.id);
-    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate=$2 ',[parentId,req.query.fromdate],(err,result)=>{
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join parent on parent.name=studentactivityreport.parentname where parent.id=$1 AND studentactivityreport.reportdate=$2 ',[parentId,req.query.fromdate],(err,result)=>{
         if(err){
             console.log(err);
             res.status(400).json({
@@ -179,7 +179,7 @@ const getReportByRoomId=async(req,res)=>{
     console.log(req.query.id,'---',typeof(req.query.fromdate));
     const roomId=parseInt(req.query.id);
     const fromDate=new Date(req.query.fromdate);
-    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate=$2',[roomId,req.query.fromdate],(err,result)=>{
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate=$2',[roomId,req.query.fromdate],(err,result)=>{
         if(err){
             console.log(err);
             res.status(400).json({
@@ -206,7 +206,7 @@ const getFullReportByRoomId=async(req,res)=>{
     const roomId=parseInt(req.query.id);
     const fromDate=new Date(req.query.fromdate);
     const toDate=new Date(req.query.todate);
-    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[roomId,fromDate,toDate],(err,result)=>{
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[roomId,fromDate,toDate],(err,result)=>{
         if(err){
             console.log(err);
             res.status(400).json({
@@ -228,7 +228,59 @@ const getFullReportByRoomId=async(req,res)=>{
      });    
 }
 
+const getBirthReportBySchoolId=async(req,res)=>{
+    console.log(req.query.id,'---');
+    const schoolId=parseInt(req.query.id);
+    await pool.query('select tblstudent.id,tblstudent.studentname,tblclass.name as roomName,tblstudent.dateofbirth from tblstudent inner join tblclass on tblclass.id=tblstudent.roomid where tblstudent.schoolid=$1',[schoolId],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('matched ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+const getContactReportBySchoolId=async(req,res)=>{
+    console.log(req.query.id,'---');
+    const schoolId=parseInt(req.query.id);
+    await pool.query('select tblstudent.id,tblstudent.studentname,parent.name as parentName, parent.contact from tblstudent inner join parent on parent.id=tblstudent.parentid where tblstudent.schoolid=$1',[schoolId],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                statusCode:400,
+                message:err,
+                status:false,
+                data:[]
+            });
+        }
+        else{
+            console.log('matched ',result.rowCount);
+            res.status(200).json({
+                statusCode:200,
+                message:'Full Report',
+                data:result.rows,
+                status:true
+            });
+        }
+     });    
+}
+
+
 module.exports={
     saveReport,getReport,getReportByDate,getReportByParentId,getReportByRoomId,
-    getFullReportByRoomId,getTodayReportByParentId
+    getFullReportByRoomId,getTodayReportByParentId,getBirthReportBySchoolId,
+    getContactReportBySchoolId
 };
