@@ -82,6 +82,9 @@ const editSubadmin=require('./routes/Subadmin/editSubadmin');
 const staffCheckIn=require('./routes/staffAttendence/staffCheckIn');
 const staffCheckOut=require('./routes/staffAttendence/staffCheckOut');
 const getstaffStatus=require('./routes/staffAttendence/getStaffStatus');
+const staffAttendenceReport=require('./routes/staffAttendence/staffAttendenceReport');
+const staffAttendenceCount=require('./routes/staffAttendence/getStaffAttdenceBySchoolId');
+
 
 const addNotice=require('./routes/notice/addNotice');
 const deleteNotice=require('./routes/notice/deleteNotice');
@@ -92,6 +95,8 @@ const studentCheckIn=require('./routes/studentAttendence/studentCheckIn');
 const studentCheckOut=require('./routes/studentAttendence/studentCheckOut');
 const getStudentStatus=require('./routes/studentAttendence/getStudentStatus');
 const getStudentReport=require('./routes/studentAttendence/getStudentAttendenceReport');
+const studentAttendenceCount=require('./routes/studentAttendence/getStudentCountBySchoolId');
+
 
 const addVideo=require('./routes/video/addVideo');
 const editVideo=require('./routes/video/editVideo');
@@ -112,7 +117,7 @@ const getFullReportByRoomId=require('./routes/studentActivityReport/getFullRepor
 const getTodayReportByParentId=require('./routes/studentActivityReport/getTodayReportByParentId');
 const getBirthReportBySchoolId=require('./routes/studentActivityReport/getBirthReportBySchoolId');
 const getContactReportBySchoolId=require('./routes/studentActivityReport/getContactReportBySchoolId');
-
+const getFullReportBySchoolId=require('./routes/studentActivityReport/ActivityReportByPassingSchoolId');
 
 
 
@@ -144,6 +149,7 @@ app.get('/',(req,res)=>{
     res.send('connected');
 });
 
+
 //api to check user name and password 
 app.use('/api',chkCred);
 app.use('/api',checkUser);
@@ -156,6 +162,7 @@ app.use('/api/parent',listParent);
 app.use('/api/parent',deleteParent);
 app.use('/api/parent',getParentById);
 app.use('/api/parent',getParentByRoomId);
+
 
 //api to manage Staff Member 
 app.use('/api/staff',allStaff);
@@ -200,7 +207,7 @@ app.use('/api/student',getStudentBySchoolId);
 app.use('/api/student',getStudentByRoomId);
 app.use('/api/student',addStudent);
 app.use('/api/student',editStudent);
-
+app.use('/api/student',studentAttendenceCount);
 
 
 //code to connect with the subAdmin services 
@@ -231,6 +238,31 @@ app.use('/api/report',getFullReportByRoomId);
 app.use('/api/report',getTodayReportByParentId);
 app.use('/api/report',getBirthReportBySchoolId);
 app.use('/api/report',getContactReportBySchoolId);
+app.use('/api/report',getFullReportBySchoolId);
+
+app.use('/api/staff',staffCheckIn);
+app.use('/api/staff',staffCheckOut);
+app.use('/api/staff',getstaffStatus);
+app.use('/api/staff',staffAttendenceReport);
+app.use('/api/staff',staffAttendenceCount);
+
+
+app.use('/api/Notice',addNotice);
+app.use('/api/Notice',editNotice);
+app.use('/api/Notice',deleteNotice);
+app.use('/api/Notice',getNoticeBySchoolId);
+
+app.use('/api/student',studentCheckIn);
+app.use('/api/student',studentCheckOut);
+app.use('/api/student',getStudentStatus);
+app.use('/api/student',getStudentReport);
+
+
+app.use('/api/video',addVideo);
+app.use('/api/video',editVideo);
+app.use('/api/video',deleteVideo);
+app.use('/api/video',getVideoByRoomId);
+app.use('/api/video',getVideoBySchoolId);
 
 
 //set the working of the IO 
@@ -282,25 +314,5 @@ server.listen(PORT,()=>{
 });
 
 
-app.use('/api/staff',staffCheckIn);
-app.use('/api/staff',staffCheckOut);
-app.use('/api/staff',getstaffStatus);
-
-app.use('/api/Notice',addNotice);
-app.use('/api/Notice',editNotice);
-app.use('/api/Notice',deleteNotice);
-app.use('/api/Notice',getNoticeBySchoolId);
-
-app.use('/api/student',studentCheckIn);
-app.use('/api/student',studentCheckOut);
-app.use('/api/student',getStudentStatus);
-app.use('/api/student',getStudentReport);
-
-
-app.use('/api/video',addVideo);
-app.use('/api/video',editVideo);
-app.use('/api/video',deleteVideo);
-app.use('/api/video',getVideoByRoomId);
-app.use('/api/video',getVideoBySchoolId);
 
 //nextval('testsubadmin'::regclass)

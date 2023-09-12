@@ -15,14 +15,31 @@ const chkLogin= async(req, res) =>{
     const userpassword=req.body.password;
     const devicetype=req.body.devicetype;
     const devicetoken=req.body.devicetoken;
+
     let schoolId='',principalId='';
     let userId=0;
     let userType='',name='';
 
     let responseData=[];
      pool.query(`select * from users where name=$1 and password=$2`, [username,userpassword],async(err,result)=>{
-        if(err){console.log(err); throw err}else{
+        if(err){console.log(err);
+            res.status(400).json({
+                message:'record not matched',
+                statusCode:400,
+                status:false,
+                data:responseData
+            });
+        }else if(result.rowCount==0){
+            console.log('invlaid');
+            res.status(400).json({
+                message:'Invalid Username or Password ',
+                statusCode:400,
+                status:false,
+                data:responseData
+            });
+        }else{
             if(result.rowCount>0){
+                console.log(result.rows);
                 userType=result.rows[0].role;
                 const reslt = await pool.query('insert into devicedetails(devicetype,devicetoken,username)values ($1,$2,$3)', [devicetype,devicetoken,username]);
                 if(userType=='admin'){
@@ -30,7 +47,6 @@ const chkLogin= async(req, res) =>{
                     userId= resultsub.rows[0].id;
                     schoolId= resultsub.rows[0].schoolid;
                     name= resultsub.rows[0].name;
-                    console.log(userId, schoolId);
                     let record={
                         id:userId,
                         schoolid:parseInt(schoolId),
@@ -38,13 +54,18 @@ const chkLogin= async(req, res) =>{
                         username:name
                     }
                     responseData.push(record);
+                    res.status(200).json({
+                        message:'true',
+                        statusCode:200,
+                        status:true,
+                        data:responseData
+                    });
                 }else if(userType=='staff'){
                     const resultsub = await pool.query('SELECT id,schoolid,principalid,name FROM tblstaff WHERE username = $1', [username]);
                     userId= resultsub.rows[0].id;
                     schoolId= resultsub.rows[0].schoolid;
                     principalId=resultsub.rows[0].principalid;
                     name= resultsub.rows[0].name;
-                    console.log(userId, schoolId,principalId);
                     let record={
                         id:userId,
                         schoolid:parseInt(schoolId),
@@ -52,7 +73,13 @@ const chkLogin= async(req, res) =>{
                         username:name,
                         principalid:principalId
                     }
-                    responseData.push(record) ;
+                    responseData.push(record);
+                    res.status(200).json({
+                        message:'true',
+                        statusCode:200,
+                        status:true,
+                        data:responseData
+                    });
                 }else if(userType=='parent'){
                     const resultsub = await pool.query('SELECT name,id,schoolid FROM parent WHERE username = $1', [username]);
                     userId= resultsub.rows[0].id;
@@ -65,27 +92,48 @@ const chkLogin= async(req, res) =>{
                         usertype:userType
                     }
                     responseData.push(record) ;
-                    console.log(userId, schoolId,principalId);
+                    res.status(200).json({
+                        message:'true',
+                        statusCode:200,
+                        status:true,
+                        data:responseData
+                    });
+                }else if(userType=='super admin'){
+                    let record={
+                        id:0,
+                        schoolid:0,
+                        username:username,
+                        usertype:userType
+                    }
+                    responseData.push(record) ;
+                    res.status(200).json({
+                        message:'true',
+                        statusCode:200,
+                        status:true,
+                        data:responseData
+                    });
+                }else{
+                    res.status(400).json({
+                        message:'Invalid Username or Password ',
+                        statusCode:400,
+                        status:false,
+                        data:responseData
+                    });
                 }
-                console.log('responseData',responseData)
-                res.status(200).json({
-                    message:'true',
-                    statusCode:200,
-                    status:true,
-                    data:responseData
-                });
             }else{
-                res.status(200).json({
-                    message:'Invalid Username or Password',
-                    statusCode:200,
+                res.status(400).json({
+                    message:'Invalid Username or Password ',
+                    statusCode:400,
                     status:false,
                     data:responseData
                 });
-                console.log('not matched ');
             }
         }
     });    
 }
+
+
+
 
 const chkUsername=async(req,res)=>{
     const username=req.body.username;

@@ -174,7 +174,6 @@ const getStaffById=(req,res)=>{
 }
 
 const deleteStaff=(req,res)=>{
-    
     let id=0;
     if(req.query.id){
         id= parseInt(req.query.id);

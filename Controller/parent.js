@@ -28,10 +28,8 @@ const getParentListBySchool=async(req,res)=>{
     const id = parseInt(req.query.id);
     console.log(id);
     const fullData = {};
-    await pool.query('select parent.id,parent.name,parent.email, parent.contact,parent.username  from parent where parent.schoolId=$1', [id], (err, result) => {
-        if (err) { console.log(err);
-            
-        }
+    await pool.query('select parent.id,parent.name,parent.email, parent.contact,parent.username, parent.gender, parent.relation  from parent where parent.schoolId=$1', [id], (err, result) => {
+        if (err) { console.log(err);}
         else {
             fullData["parent"] = result.rows
             pool.query('select * from tblstudent where parentid=$1', [id], (err, reslt) => {

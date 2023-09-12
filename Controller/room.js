@@ -171,7 +171,7 @@ const editRoom=(req, res) =>{
             }); 
         }else{
             res.status(200).json({
-                message:'Record Deleted',
+                message:'Record Updated',
                 statusCode:200,
                 status:true,
                 data:result.rows

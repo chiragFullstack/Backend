@@ -172,10 +172,36 @@ const getStudentAttendenceReport = async (req, res) => {
             }
         });
     }
-   
-    
-  
 }
+
+const getStudentReportBySchoolId = async (req, res) => {
+    const schoolid =parseInt(req.query.id);
+    const fromDate=req.query.fromdate;
+    const toDate=req.query.todate;
+    
+    if(schoolid!='' && fromDate!='' && toDate!=''){
+        await pool.query('select tblstudentcheckin.studentid,tblstudent.studentname,tblclass.name as roomname, count(tblstudentcheckin.attendence) as totalAttendence from tblstudentcheckin  inner join tblstudent  on tblstudent.id=tblstudentcheckin.studentid inner join tblclass on tblstudent.roomid=tblclass.id where tblstudentcheckin.schoolid=$1 and attendencedate>=$2 and attendencedate<=$3 and tblstudentcheckin.attendence=true group by  tblstudent.studentname,tblstudentcheckin.studentid,tblclass.name', [schoolid,fromDate,toDate],(err, result) => {
+            if (err) {
+                console.log(err);
+                res.status(err.code).json({
+                    status: true,
+                    statusCode: err.code,
+                    message: err.message,
+                    data:[]
+                });
+            }
+            else {
+                res.status(200).json({
+                    status: true,
+                    statusCode: 200,
+                    message: 'Student Attendence Status with single ',
+                    data: result.rows 
+                });
+            }
+        });
+    }
+}
+
 module.exports = {
-    studentCheckIn, studentCheckOut, getStudentStatus,getStudentAttendenceReport
+    studentCheckIn, studentCheckOut, getStudentStatus,getStudentAttendenceReport,getStudentReportBySchoolId
 }
