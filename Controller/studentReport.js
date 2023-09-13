@@ -51,6 +51,7 @@ const manageReport= async(studentId, data)=>{
                         let notes=data.notes ||'';
                         let checkuptime=data.checkuptime ||'';
                         let checkupstatus=data.checkupstatus ||'';
+                        console.log('pass multiple entry ',resultRecord.rowCount);
                         if(resultRecord.rowCount==undefined || resultRecord.rowCount==0){
                             pool.query('insert into studentactivityreport (studentname, schoolname, roomname, parentname, reportdate,naptime,napduration, mealtime, mealtype, notes, activity, checkuptime, checkupstatus, studentid, allergystatus, allergydescription) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)RETURNING *',[studentName,schoolName, roomName, parentName,formattedDateTime, naptime, napduration, mealtime, mealtype, notes,  activity, checkuptime, checkupstatus,  studentId,allergystatus,allergydescription],(err,result)=>{
                                 if(err){   
