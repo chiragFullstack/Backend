@@ -52,12 +52,21 @@ const deleteSchool=(req,res)=>{
         id= parseInt(req.body.id);
     }
     pool.query('delete  from tblschool where id = $1', [id],(err,result)=>{
-        if(err){console.log(err); throw err}
-        res.status(200).json({
-            message:'true',
-            statusCode:200,
-            data:result.rows
-        }); 
+        if(err){
+            res.status(400).json({
+                message:'false',
+                statusCode:400,
+                data:[]
+            });     
+            console.log(err.message); 
+        }else{
+            res.status(200).json({
+                message:'true',
+                statusCode:200,
+                data:result.rows
+            }); 
+        }
+        
     });
 }
 

@@ -82,7 +82,7 @@ const getPrincipalId = async (schoolId) => {
 
 
 const addStaff=async(req,res) =>{
-    const{name,contact,email,designation,schoolId,classId,picUrl,username,gender}=req.body;
+    const{name,contact,email,designation,schoolId,classId,username,gender}=req.body;
     console.log(req.body);
     let location='';
     let Password='';

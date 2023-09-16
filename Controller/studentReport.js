@@ -285,9 +285,9 @@ const getFullReportByRoomId=async(req,res)=>{
     const roomId=parseInt(req.query.id);
     const fromDate=new Date(req.query.fromdate);
     const toDate=new Date(req.query.todate);
-    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[roomId,fromDate,toDate],(err,result)=>{
+    await pool.query('select studentactivityreport.studentname,studentactivityreport.schoolname, studentactivityreport.roomname,studentactivityreport.parentname, studentactivityreport.reportdate,studentactivityreport.naptime, studentactivityreport.napduration,studentactivityreport.mealtime,studentactivityreport.mealtype, studentactivityreport.notes,studentactivityreport.activity,studentactivityreport.checkuptime, studentactivityreport.checkupstatus,studentactivityreport.allergystatus,studentactivityreport.allergydescription from studentactivityreport inner join tblclass on tblclass.name=studentactivityreport.roomname where tblclass.id=$1 AND studentactivityreport.reportdate>$2 AND studentactivityreport.reportdate<$3',[roomId,fromDate,toDate],(err,result)=>{
         if(err){
-            console.log(err);
+            console.log(err.message);
             res.status(400).json({
                 statusCode:400,
                 message:err,

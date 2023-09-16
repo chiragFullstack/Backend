@@ -67,9 +67,7 @@ const studentCheckIn = async (req, res) => {
                         });
                     }
                 });
-
             } else {
-
                 const checkInStatus = true;
                 const checkIndate = new Date();
                 pool.query('update tblstudentcheckin set attendence=$1 where studentid=$2 and attendencedate=$3 RETURNING *', [checkInStatus, student_id, checkIndate], (err, result) => {
