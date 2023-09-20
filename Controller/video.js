@@ -12,8 +12,6 @@ const pool=new Pool({
     port:5432
 });
 
-
-
 const getVideoByRoomId=async (req,res)=>{
     const id = parseInt(req.query.id);
     const currentDate=new Date();

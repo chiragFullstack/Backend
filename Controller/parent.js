@@ -104,7 +104,7 @@ const deleteParent=(req,res)=>{
             res.status(200).json({
                 status:true,
                 statusCode:200,
-                message:'record Inserted',
+                message:'record Deleted',
                 data:result.rows[0] 
             });
         }

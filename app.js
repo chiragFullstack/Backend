@@ -13,9 +13,10 @@ const app=express();
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
+
 const server=http.createServer(app);
 
-const PORT=process.env.PORT|5000;
+const PORT=process.env.PORT||5000;
 const Pool=require("pg").Pool
 
 
@@ -208,6 +209,10 @@ app.use('/api/student',getStudentByRoomId);
 app.use('/api/student',addStudent);
 app.use('/api/student',editStudent);
 app.use('/api/student',studentAttendenceCount);
+app.use('/api/student',studentCheckIn);
+app.use('/api/student',studentCheckOut);
+app.use('/api/student',getStudentStatus);
+app.use('/api/student',getStudentReport);
 
 
 //code to connect with the subAdmin services 
@@ -252,10 +257,7 @@ app.use('/api/Notice',editNotice);
 app.use('/api/Notice',deleteNotice);
 app.use('/api/Notice',getNoticeBySchoolId);
 
-app.use('/api/student',studentCheckIn);
-app.use('/api/student',studentCheckOut);
-app.use('/api/student',getStudentStatus);
-app.use('/api/student',getStudentReport);
+
 
 
 app.use('/api/video',addVideo);
@@ -266,16 +268,22 @@ app.use('/api/video',getVideoBySchoolId);
 
 
 //set the working of the IO 
-const io=socketIO(server);
+const io=socketIO(server,{
+    cors:{
+        origin:"http://localhost:3000",
+        methods:["GET","POST"]
+    }
+});
 
 io.on("connection",(socket)=>{
-    console.log('socket ID---');
+    console.log('socket ID---',socket.id);
 
     //when()ever the users join the room 
     socket.on('join_room',async(data)=>{
         socket.join(data);
         console.log('socket Id ',socket.id,'--',data);
-        const{senderid,recieverid}=data;
+        //if admin or staff logged in then sender will be schoolid and reciever will be parent id 
+        const{senderid,recieverid}=data; 
         const sendrid=parseInt(senderid);
         const recid=parseInt(recieverid);
         await pool.query('select * from tblmessage where senderid=$1 and recieverid=$2 or senderid=$3 and recieverid=$4',[sendrid,recid,recid,sendrid],(err,result)=>{

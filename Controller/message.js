@@ -19,7 +19,7 @@ const saveMessage=async(data)=>{
     const formattedDateTime = new Date( utcMoment.format() );
     const{senderid,message,recieverid, sendertype,roomid}=data;
     //const msgdate=new Date().toISOString();
-    //console.log(data);
+    console.log(data);
     let schoolid= roomid.split('_');
     let sender_id = parseInt(senderid)
     let parent_id = parseInt(schoolid[1])

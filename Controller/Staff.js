@@ -143,7 +143,7 @@ const editStaff=async(req, res)=>{
             res.status(200).json({
                 status:true,
                 statusCode:200,
-                message:'record deleted',
+                message:'record Updated',
                 data:result.rows
             }); 
         }
