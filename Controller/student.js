@@ -120,7 +120,7 @@ const getStudentByparentId = async (req, res) => {
           tblstudent.picurl,
           tblstudent.roomid,
           tblclass.name AS roomname,
-          COALESCE(tblstudentcheckin.attendence, false) AS checkinStatus,
+          COALESCE(tblstudentcheckin.attendence, false) AS checkinstatus,
           tblstudent.dateofbirth,
           tblstudent.gender
         FROM
@@ -176,7 +176,7 @@ const getStudentByparentId = async (req, res) => {
   
         dataChild.push(rec);
       }
-  
+  console.log(dataChild)
      
   
       res.status(200).json({
