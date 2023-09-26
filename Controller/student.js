@@ -176,9 +176,8 @@ const getStudentByparentId = async (req, res) => {
   
         dataChild.push(rec);
       }
-  console.log(dataChild)
-     
-  
+        console.log(dataChild)
+    
       res.status(200).json({
         message: 'true',
         statusCode: 200,
@@ -338,7 +337,7 @@ function getStudentCheckStatus(idx) {
     let currentDate = new Date();
     let status = false;
     return new Promise((resolve, reject) => {
-        pool.query('select * from tblstudentcheckin where studentid=$1', [id], (err1, result1) => {
+        pool.query('select * from tblstudentcheckin where studentid=$1 and  attendencedate = $2', [id,currentDate], (err1, result1) => {
             if (err1) {
                 reject(err1);
                 return;
@@ -388,11 +387,9 @@ async function fetchStudentDataWithCheckStatus(result) {
             'gender': student.gender,
             'checkinStatus': Stustatus
         };
-
         dataChild.push(rec);
         console.log('status ---', rec);
     }
-
     return dataChild;
 }
 

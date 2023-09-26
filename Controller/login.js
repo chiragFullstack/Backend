@@ -9,129 +9,132 @@ const pool=new Pool({
     port:5432
 });
 
-const chkLogin= async(req, res) =>{
+const getUserDetails = async (username, userpassword, devicetype, devicetoken, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE name = $1 AND password = $2', [username, userpassword]);
+  
+      if (result.rowCount === 0) {
+        return null; // User not found
+      }
+  
+      const userType = result.rows[0].role;
+      await pool.query('INSERT INTO devicedetails (devicetype, devicetoken, username) VALUES ($1, $2, $3)', [devicetype, devicetoken, username]);
+  
+      return { userType };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+  
+  const getSubadminDetails = async (username, res) => {
+    try {
+      const result = await pool.query('SELECT id, schoolid, name FROM subadmin WHERE username = $1', [username]);
+  
+      if (result.rowCount === 0) {
+        return null; // Subadmin not found
+      }
+  
+      const { id, schoolid, name } = result.rows[0];
+      return { id, schoolid: parseInt(schoolid), username: name, usertype: 'admin' };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+  
+  const getStaffDetails = async (username, res) => {
+    try {
+      const result = await pool.query('SELECT id, schoolid, principalid, name FROM tblstaff WHERE username = $1', [username]);
+  
+      if (result.rowCount === 0) {
+        return null; // Staff not found
+      }
+  
+      const { id, schoolid, principalid, name } = result.rows[0];
+      return { id, schoolid: parseInt(schoolid), principalid, username: name, usertype: 'staff' };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+  
+  const getParentDetails = async (username, res) => {
+    try {
+      const result = await pool.query('SELECT id, schoolid, name FROM parent WHERE username = $1', [username]);
+  
+      if (result.rowCount === 0) {
+        return null; // Parent not found
+      }
+  
+      const { id, schoolid, name } = result.rows[0];
+      return { id, schoolid: parseInt(schoolid), username: name, usertype: 'parent' };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+  
+  const chkLogin = async (req, res) => {
     console.log('record to get ', req.body);
-    const username=req.body.username;
-    const userpassword=req.body.password;
-    const devicetype=req.body.devicetype;
-    const devicetoken=req.body.devicetoken;
-
-    let schoolId='',principalId='';
-    let userId=0;
-    let userType='',name='';
-
-    let responseData=[];
-     pool.query(`select * from users where name=$1 and password=$2`, [username,userpassword],async(err,result)=>{
-        if(err){console.log(err);
-            res.status(400).json({
-                message:'record not matched',
-                statusCode:400,
-                status:false,
-                data:responseData
-            });
-        }else if(result.rowCount==0){
-            console.log('invlaid');
-            res.status(400).json({
-                message:'Invalid Username or Password ',
-                statusCode:400,
-                status:false,
-                data:responseData
-            });
-        }else{
-            if(result.rowCount>0){
-                console.log(result.rows);
-                userType=result.rows[0].role;
-                const reslt = await pool.query('insert into devicedetails(devicetype,devicetoken,username)values ($1,$2,$3)', [devicetype,devicetoken,username]);
-                if(userType=='admin'){
-                    const resultsub = await pool.query('SELECT id,schoolid,name FROM subadmin WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    name= resultsub.rows[0].name;
-                    let record={
-                        id:userId,
-                        schoolid:parseInt(schoolId),
-                        usertype:userType,
-                        username:name
-                    }
-                    responseData.push(record);
-                    res.status(200).json({
-                        message:'true',
-                        statusCode:200,
-                        status:true,
-                        data:responseData
-                    });
-                }else if(userType=='staff'){
-                    const resultsub = await pool.query('SELECT id,schoolid,principalid,name FROM tblstaff WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    principalId=resultsub.rows[0].principalid;
-                    name= resultsub.rows[0].name;
-                    let record={
-                        id:userId,
-                        schoolid:parseInt(schoolId),
-                        usertype:userType,
-                        username:name,
-                        principalid:principalId
-                    }
-                    responseData.push(record);
-                    res.status(200).json({
-                        message:'true',
-                        statusCode:200,
-                        status:true,
-                        data:responseData
-                    });
-                }else if(userType=='parent'){
-                    const resultsub = await pool.query('SELECT name,id,schoolid FROM parent WHERE username = $1', [username]);
-                    userId= resultsub.rows[0].id;
-                    schoolId= resultsub.rows[0].schoolid;
-                    name= resultsub.rows[0].name;
-                    let record={
-                        id:userId,
-                        schoolid:parseInt(schoolId),
-                        username:name,
-                        usertype:userType
-                    }
-                    responseData.push(record) ;
-                    res.status(200).json({
-                        message:'true',
-                        statusCode:200,
-                        status:true,
-                        data:responseData
-                    });
-                }else if(userType=='super admin'){
-                    let record={
-                        id:0,
-                        schoolid:0,
-                        username:username,
-                        usertype:userType
-                    }
-                    responseData.push(record) ;
-                    res.status(200).json({
-                        message:'true',
-                        statusCode:200,
-                        status:true,
-                        data:responseData
-                    });
-                }else{
-                    res.status(400).json({
-                        message:'Invalid Username or Password ',
-                        statusCode:400,
-                        status:false,
-                        data:responseData
-                    });
-                }
-            }else{
-                res.status(400).json({
-                    message:'Invalid Username or Password ',
-                    statusCode:400,
-                    status:false,
-                    data:responseData
-                });
-            }
-        }
-    });    
-}
-
+    const { username, password, devicetype, devicetoken } = req.body;
+  
+    try {
+      const userDetails = await getUserDetails(username, password, devicetype, devicetoken, res);
+  
+      if (!userDetails) {
+        return res.status(400).json({
+          message: 'Invalid Username or Password',
+          statusCode: 400,
+          status: false,
+          data: [],
+        });
+      }
+  
+      let responseData = [];
+  
+      if (userDetails.userType === 'admin') {
+        const subadminDetails = await getSubadminDetails(username, res);
+        responseData.push(subadminDetails);
+      } else if (userDetails.userType === 'staff') {
+        const staffDetails = await getStaffDetails(username, res);
+        responseData.push(staffDetails);
+      } else if (userDetails.userType === 'parent') {
+        const parentDetails = await getParentDetails(username, res);
+        responseData.push(parentDetails);
+      } else if (userDetails.userType === 'super admin') {
+        responseData.push({
+          id: 0,
+          schoolid: 0,
+          username,
+          usertype: 'super admin',
+        });
+      } else {
+        return res.status(400).json({
+          message: 'Invalid Username or Password',
+          statusCode: 400,
+          status: false,
+          data: [],
+        });
+      }
+  
+      res.status(200).json({
+        message: 'true',
+        statusCode: 200,
+        status: true,
+        data: responseData,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        message: 'Internal Server Error',
+        statusCode: 500,
+        status: false,
+        data: [],
+      });
+    }
+  };
+  
 
 
 

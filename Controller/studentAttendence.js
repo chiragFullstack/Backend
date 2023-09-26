@@ -87,11 +87,9 @@ const studentCheckIn = async (req, res) => {
                         });
                     }
                 });
-
             }
         }
     });
-
 }
 
 
