@@ -90,9 +90,8 @@ const getUserDetails = async (username, userpassword, devicetype, devicetoken, r
           data: [],
         });
       }
-  
+
       let responseData = [];
-  
       if (userDetails.userType === 'admin') {
         const subadminDetails = await getSubadminDetails(username, res);
         responseData.push(subadminDetails);
@@ -100,6 +99,7 @@ const getUserDetails = async (username, userpassword, devicetype, devicetoken, r
         const staffDetails = await getStaffDetails(username, res);
         responseData.push(staffDetails);
       } else if (userDetails.userType === 'parent') {
+        console.log('parent');
         const parentDetails = await getParentDetails(username, res);
         responseData.push(parentDetails);
       } else if (userDetails.userType === 'super admin') {

@@ -84,8 +84,15 @@ const addSubadmin=(req, res) =>{
               if(err){console.log(err); throw err}
           });
           pool.query('insert into subadmin(name,contact,address,email,username,password,schoolid,picurl,gender)values($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',[name,contact,address,email,username,userPassword,schoolid,picurl,gender],(err,result)=>{
-              if(err){console.log(err); throw err}else{
+              if(err){console.log(err); 
+                    res.status(400).json({
+                        status:false,
+                        msg:err.message,
+                        data:[],
+                    });
+                }else{
                   res.status(200).json({
+                        status:true,
                       msg:'record Inserted',
                       data:result.rows[0],
                   });
@@ -98,6 +105,7 @@ const addSubadmin=(req, res) =>{
 const editSubadmin=(req, res) =>{
     const{name,contact,address,email,username,password,schoolId,picurl,gender}=req.body;
     let id=0;
+    console.log(req.body);
     if(req.query.id){
         id= parseInt(req.query.id);
     }else{
@@ -120,9 +128,16 @@ const editSubadmin=(req, res) =>{
           console.log('Image uploaded successfully:', data.Location);
           location=data.Location;
           pool.connect();
-          pool.query('update subadmin set name=$1,contact=$2,address=$3,email=$4,username=$5,password=$6,schoolid=$7,picurl=$8,$gender=$9 where id='+id+' RETURNING *',[name,contact,address,email,username,password,schoolId,location,gender],(err,result)=>{
-              if(err){console.log(err); throw err}else{
+          pool.query('update subadmin set name=$1,contact=$2,address=$3,email=$4,username=$5,password=$6,schoolid=$7,picurl=$8,gender=$9 where id='+id+' RETURNING *',[name,contact,address,email,username,password,schoolId,location,gender],(err,result)=>{
+              if(err){console.log(err.message); 
+                res.status(400).json({
+                    status:false,
+                    msg:'record Updated',
+                    data:[],
+                });
+                }else{
                   res.status(200).json({
+                      status:true,
                       msg:'record Updated',
                       data:result.rows[0],
                   });

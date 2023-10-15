@@ -270,7 +270,7 @@ app.use('/api/video',getVideoBySchoolId);
 //set the working of the IO 
 const io=socketIO(server,{
     cors:{
-        origin:"http://localhost:3000",
+        origin:"http://54.172.2.94:8080/",
         methods:["GET","POST"]
     }
 });

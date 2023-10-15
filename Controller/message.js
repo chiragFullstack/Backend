@@ -54,8 +54,6 @@ const getChatRoomId=async(req,res)=>{
         }
     });
 }
-
-
 const getMessage=async(data)=>{
     const{senderid,message,recieverid}=data;
     const sendrid=parseInt(senderid);

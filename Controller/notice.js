@@ -69,7 +69,7 @@ const deleteNoticeBySchool=(req,res)=>{
         }
         else{
             res.status(200).json({
-                message:'All Notice',
+                message:'Notice Deleted',
                 statusCode:200,
                 status:true,
                 data:result.rows
@@ -95,7 +95,7 @@ const addNotice=async(req, res) =>{
         else{
             res.status(200).json({
                 statusCode:200,
-                message:'Room Record Inserted',
+                message:'Notice Record Saved',
                 data:result.rows[0],
                 status:true
             });
@@ -126,7 +126,7 @@ const editNotice=async(req, res) =>{
         else{
             res.status(200).json({
                 statusCode:200,
-                message:'Room Record Inserted',
+                message:'Notice Record Updated',
                 data:result.rows,
                 status:true
             });

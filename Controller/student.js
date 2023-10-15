@@ -295,7 +295,7 @@ const getStudentByRoomId=(req,res)=>{
                     };
                     const signedUrl =s3.getSignedUrl('getObject', params);
                     pic_url=signedUrl;
-                }else{
+                }else{  
                     pic_url='';
                 }
                 let rec={
