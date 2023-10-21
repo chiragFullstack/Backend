@@ -271,13 +271,13 @@ app.use('/api/video',getVideoBySchoolId);
 const io=socketIO(server,{
     cors:{
         origin:"http://54.172.2.94:8080/",
+        //origin:"http://localhost:3000/",
         methods:["GET","POST"]
     }
 });
 
 io.on("connection",(socket)=>{
     console.log('socket ID---',socket.id);
-
     //when()ever the users join the room 
     socket.on('join_room',async(data)=>{
         socket.join(data);
@@ -291,7 +291,6 @@ io.on("connection",(socket)=>{
                 return false;
             }else{
                 io.to(socket.id).emit("receive_message",result.rows);
-                console.log(data.roomid,'send data to front end app ');
             }
         });
     });
@@ -309,7 +308,15 @@ io.on("connection",(socket)=>{
         const recid=parseInt(recieverid);
         console.log(senderid,'----',recieverid);
         let json = [data]
-        io.emit("receive_message",json);
+        await pool.query('select * from tblmessage where senderid=$1 and recieverid=$2 or senderid=$3 and recieverid=$4',[sendrid,recid,recid,sendrid],(err,result)=>{
+            if(err){console.log(err);
+                return false;
+            }else{
+                io.to(socket.id).emit("receive_message",result.rows);
+                console.log(result.rows,'send data to front end app ');
+            }
+        });
+        //io.emit("receive_message",json);
     });
     //when the socket is disconnected 
     socket.on('disconnect',()=>{
