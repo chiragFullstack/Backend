@@ -121,6 +121,8 @@ const getContactReportBySchoolId=require('./routes/studentActivityReport/getCont
 const getFullReportBySchoolId=require('./routes/studentActivityReport/ActivityReportByPassingSchoolId');
 
 
+const classData=require('./routes/Overview/classActivity');
+
 
 
 //this is the folder where we need to 
@@ -257,7 +259,7 @@ app.use('/api/Notice',editNotice);
 app.use('/api/Notice',deleteNotice);
 app.use('/api/Notice',getNoticeBySchoolId);
 
-
+app.use('/api/Dashboard',classData);
 
 
 app.use('/api/video',addVideo);
@@ -266,11 +268,13 @@ app.use('/api/video',deleteVideo);
 app.use('/api/video',getVideoByRoomId);
 app.use('/api/video',getVideoBySchoolId);
 
+
+
 //set the working of the IO 
 const io=socketIO(server,{
     cors:{
-       //origin:"http://54.172.2.94:8080/",
-        origin:"http://localhost:3000/",
+        origin:"http://54.172.2.94:8080/",
+       // origin:"http://localhost:3000/",
         methods:["GET","POST"]
     }
 });
