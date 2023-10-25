@@ -53,9 +53,11 @@ const getSubadminById=(req,res)=>{
     const id = parseInt(req.query.id);
     pool.query('select * from subadmin where id=$1', [id],(err,result)=>{
         if(err){console.log(err); throw err}
-        res.json({
-            data:result.rows
-        });
+        res.status(200).json({
+          status:true,
+          msg:'record Details',
+          data:result.rows,
+      });
     });
 }
 const addSubadmin=(req, res) =>{

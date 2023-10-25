@@ -3,6 +3,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ dest: 'uploads/' });
 const send_Email=require('../Controller/mail/Sendmail');
+const AWS = require('./config');
 
 const pool=new Pool({
     user:'developer',
@@ -62,18 +63,65 @@ const getParentById=async (req,res)=>{
     await pool.query('select parent.id,parent.name,parent.email, parent.contact,parent.username, parent.relation, parent.gender  from parent where parent.id=$1', [id], (err, result) => {
         if (err) { console.log(err); throw err }
         else {
-            fullData["parent"] = result.rows
+            fullData["parent"] = result.rows;
+            const dataChild = [];
             pool.query('select * from tblstudent where parentid=$1', [id], (err, reslt) => {
                 if (err) { console.log(err);
                     res.status(err.code).json({
                         message: err.message,
                         statusCode:err.code,
                         status: true,
-                        data: fullData
+                        data: []
                     });
                 }else{
-                    console.log(reslt.rows);
-                    fullData["child"] = reslt.rows
+                    console.log(reslt.rows.length);
+                    const s3 = new AWS.S3();
+                    const currentDate = new Date();
+                    for (let x = 0; x < reslt.rows.length; x++) {
+                        let pic_url = '';
+                        console.log(reslt.rows[x].picurl);    
+                        // Moved this part inside the query callback
+                        let status = false; // Default to false
+                        pool.query('select attendence from tblstudentcheckin where studentid=$1 and attendencedate=$2', [parseInt(reslt.rows[x].id), currentDate], (err1, result1) => {
+                            if (!err1) {
+                                if (result1.rows.length > 0) {
+                                    status = result1.rows[0].attendence;
+                                }else{
+                                    status=false;
+                                }
+                            }
+                        });
+                        if (reslt.rows[x].picurl.toString() != "") {
+                                const idx = reslt.rows[x].picurl.toString().lastIndexOf('/');
+                                const Name = reslt.rows[x].picurl.toString().slice(idx + 1, reslt.rows[x].picurl.toString().length);
+                                console.log(Name);
+                                const params = {
+                                    Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+                                    Key: Name,
+                                    Expires: 364 * 24 * 60 * 60
+                                };
+                                const signedUrl = s3.getSignedUrl('getObject', params);
+                                pic_url = signedUrl;
+                            } else {
+                                pic_url = '';
+                            }
+                            let rec = {
+                                'id': reslt.rows[x].id,
+                                'name': reslt.rows[x].studentname,
+                                'parentid': reslt.rows[x].parentid,
+                                'roomid': reslt.rows[x].roomid,
+                                'schoolid': reslt.rows[x].schoolid,
+                                'picurl': pic_url,
+                                'roomname': reslt.rows[x].name,
+                                'checkinStatus': status, // Update status here
+                                'dateofbirth': reslt.rows[x].dateofbirth,
+                                'gender': reslt.rows[x].gender,
+                            };
+                            dataChild.push(rec);       
+                            console.log('child record ---',rec);
+                    }
+                    fullData["child"] = dataChild;
+
                     res.status(200).json({
                         message: 'record fetched',
                         statusCode: 200,
