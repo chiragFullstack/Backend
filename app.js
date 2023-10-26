@@ -122,7 +122,7 @@ const getFullReportBySchoolId=require('./routes/studentActivityReport/ActivityRe
 
 
 const classData=require('./routes/Overview/classActivity');
-
+const activityData=require('./routes/Overview/activityReport');
 
 
 //this is the folder where we need to 
@@ -259,8 +259,10 @@ app.use('/api/Notice',editNotice);
 app.use('/api/Notice',deleteNotice);
 app.use('/api/Notice',getNoticeBySchoolId);
 
-app.use('/api/Dashboard',classData);
 
+
+app.use('/api/Dashboard',classData);
+app.use('/api/Dashboard',activityData);
 
 app.use('/api/video',addVideo);
 app.use('/api/video',editVideo);
@@ -273,7 +275,7 @@ app.use('/api/video',getVideoBySchoolId);
 //set the working of the IO 
 const io=socketIO(server,{
     cors:{
-        origin:"http://54.172.2.94:8080/",
+       origin:"http://54.172.2.94:8080/",
        // origin:"http://localhost:3000/",
         methods:["GET","POST"]
     }
