@@ -1,5 +1,8 @@
 const Pool=require("pg").Pool
 const moment = require('moment');
+const AWS = require('./config');
+
+
 const pool=new Pool({
     user:'developer',
     host:'54.172.2.94',
@@ -118,6 +121,92 @@ const classCount = async (req, res) => {
         }
     });
 };
+
+const getStudents = async (req, res) => {
+    const { schoolId } = req.query;
+    const recordData = [];
+
+    await  pool.query('select id,studentname, roomid, picurl,gender from tblstudent where schoolid=$1',[parseInt(schoolId)],(err,result)=>{
+        if(err){
+            console.log(err);
+            res.status(400).json({
+                message:'Record is Empty',
+                statusCode:400,
+                data:[],
+                status:false
+            });
+        }else{
+            console.log(result.rows);
+            
+            const dataChild=[];
+            const s3 = new AWS.S3();
+            for(let x=0;x<result.rows.length;x++){
+                const idx=result.rows[x].picurl.toString().lastIndexOf('/');
+                const Name=result.rows[x].picurl.toString().slice(idx+1,result.rows[x].picurl.toString().length);
+                console.log(Name);
+                const params = {
+                    Bucket: 'webdaycarebucket', // replace with your S3 bucket name
+                    Key: Name,
+                    Expires:364*24*60*60
+                };
+                const signedUrl =s3.getSignedUrl('getObject', params);
+                pic_url=signedUrl;
+                let rec={
+                    'id':result.rows[x].id,
+                    'name':result.rows[x].studentname,
+                    'roomid':result.rows[x].roomid,
+                    'picurl':pic_url,
+                    'gender':result.rows[x].gender,
+                }
+                dataChild.push(rec);
+            }
+            console.log(dataChild);
+            res.status(200).json({
+                message:'Kids Data ',
+                statusCode:200,
+                data:dataChild,
+                status:true
+            });
+        }
+    });
+}
+
+const attendanceCount = async (req, res) => {
+    const { schoolId } = req.query;
+    const recordData = [];
+    console.log('record to get ', schoolId);
+    const currentDate = new Date();
+    const inputDate = moment(currentDate, "YYYY-MM-DD");
+    // Convert to UTC
+    const utcDate = inputDate.utc();
+    // Format the UTC date
+    const formattedUTCDate = utcDate.format('YYYY-MM-DD');
+
+  await  pool.query('select count(*) from tblstudent where schoolid=$1',[parseInt(schoolId)],(err,result)=>{
+        if(err){console.log(err); throw err}else{
+                console.log(result.rows[0].count);
+                const obj = {}; // Ceate an empty object
+                obj["totalStudent"] = result.rows[0].count; // Add the key-value pair to the object
+                recordData.push(obj);
+                pool.query('select   SUM(CASE WHEN attendence = true THEN 1 ELSE 0 END) AS true_count,SUM(CASE WHEN attendence = false THEN 1 ELSE 0 END) AS false_count from tblstudentcheckin where schoolid=$1 and attendencedate=$2 ',[parseInt(schoolId),formattedUTCDate],(err,result1)=>{
+                    if(err){console.log(err); throw err}else{
+                            const obj = {}; // Ceate an empty object
+                            obj["presentCount"] = result1.rows[0].true_count?result1.rows[0].true_count:0; // Add the key-value pair to the object
+                            obj["checkoutCount"] = result1.rows[0].false_count?result1.rows[0].false_count:0; // Add the key-value pair to the object
+                            recordData.push(obj);
+                            console.log(recordData);
+                            res.json({
+                                message:'Overview Record',
+                                statusCode:200,
+                                data:recordData,
+                                status:false
+                            });
+                    }
+                });
+        }
+    });
+};
+
+
   
-  
-module.exports={classCount,activityCount};
+module.exports={classCount,activityCount,getStudents,attendanceCount};

@@ -24,8 +24,7 @@ const getStudent=(req,res)=>{
         });
     });
 }
-const deleteStudent=(req,res)=>{
-    
+const deleteStudent=(req,res)=>{    
     let id=0;
     if(req.query.id){
         id= parseInt(req.query.id);
