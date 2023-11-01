@@ -85,7 +85,7 @@ const staffCheckOut=require('./routes/staffAttendence/staffCheckOut');
 const getstaffStatus=require('./routes/staffAttendence/getStaffStatus');
 const staffAttendenceReport=require('./routes/staffAttendence/staffAttendenceReport');
 const staffAttendenceCount=require('./routes/staffAttendence/getStaffAttdenceBySchoolId');
-
+const allStaffList =require('./routes/staffAttendence/staffList');
 
 const addNotice=require('./routes/notice/addNotice');
 const deleteNotice=require('./routes/notice/deleteNotice');
@@ -125,7 +125,7 @@ const classData=require('./routes/Overview/classActivity');
 const activityData=require('./routes/Overview/activityReport');
 const studentData=require('./routes/Overview/studentData');
 const attendanceData=require('./routes/Overview/attendenceCount');
-
+const singleStaffAttendence=require('./routes/staffAttendence/getSingleStaffAttendence');
 //this is the folder where we need to 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -253,7 +253,8 @@ app.use('/api/staff',staffCheckOut);
 app.use('/api/staff',getstaffStatus);
 app.use('/api/staff',staffAttendenceReport);
 app.use('/api/staff',staffAttendenceCount);
-
+app.use('/api/staff',allStaffList);
+app.use('/api/staff',singleStaffAttendence);
 
 app.use('/api/Notice',addNotice);
 app.use('/api/Notice',editNotice);
@@ -278,8 +279,8 @@ app.use('/api/video',getVideoBySchoolId);
 //set the working of the IO 
 const io=socketIO(server,{
     cors:{
-       origin:"http://54.172.2.94:8080/",
-      //  origin:"http://localhost:3000/",
+      origin:"http://54.172.2.94:8080/",
+       // origin:"http://localhost:3000/",
         methods:["GET","POST"]
     }
 });
