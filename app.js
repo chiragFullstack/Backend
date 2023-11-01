@@ -125,6 +125,8 @@ const classData=require('./routes/Overview/classActivity');
 const activityData=require('./routes/Overview/activityReport');
 const studentData=require('./routes/Overview/studentData');
 const attendanceData=require('./routes/Overview/attendenceCount');
+const ratioData=require('./routes/Overview/ratioReport');
+
 const singleStaffAttendence=require('./routes/staffAttendence/getSingleStaffAttendence');
 //this is the folder where we need to 
 const storage = multer.memoryStorage();
@@ -267,6 +269,8 @@ app.use('/api/Dashboard',classData);
 app.use('/api/Dashboard',activityData);
 app.use('/api/Dashboard',studentData);
 app.use('/api/Dashboard',attendanceData);
+app.use('/api/Dashboard',ratioData);
+
 
 app.use('/api/video',addVideo);
 app.use('/api/video',editVideo);

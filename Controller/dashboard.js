@@ -206,7 +206,66 @@ const attendanceCount = async (req, res) => {
         }
     });
 };
+const countRatio = async (req, res) => {
+    const { schoolId } = req.query;
+    const recordData = [];
+    console.log('record to get ', schoolId);
+    const currentDate = new Date();
+    const inputDate = moment(currentDate, "YYYY-MM-DD");
+    // Convert to UTC
+    const utcDate = inputDate.utc();
+    // Format the UTC date
+    const formattedUTCDate = utcDate.format('YYYY-MM-DD');
+
+    try {
+        const classResult = await pool.query('select id from tblclass where schoolid=$1', [parseInt(schoolId)]);
+
+        for (let x = 0; x < classResult.rows.length; x++) {
+            let obj = {};
+            const studentResult = await pool.query('select count(tblstudentcheckin.id) as totalStudent from tblstudentcheckin inner join tblstudent on tblstudentcheckin.studentid=tblstudent.id where tblstudent.roomid=$1 and tblstudentcheckin.attendencedate=$2', [parseInt(classResult.rows[x].id), formattedUTCDate]);
+            
+            const staffResult = await pool.query('select count(tblstaffcheckin.id) as totalStaff from tblstaffcheckin inner join tblStaff on tblstaffcheckin.staffid=tblstaff.id where tblstaff.classid=$1 and tblstaffcheckin.attendencedate=$2', [parseInt(classResult.rows[x].id), formattedUTCDate]);
+
+            let studentCount = 0;
+            let staffCount = 0;
+            console.log('student results---',studentResult.rows[studentResult.rows.length-1].totalStudent);
+            
+            if (studentResult.rows.length > 0) {
+                let data=studentResult.rows;
+                console.log('student results Data---',data[0].totalStudent);
+                obj['studentCount'] = studentResult.rows;
+                studentCount = studentResult.rows[0].totalStudent || studentResult.rows[0].totalstudent;
+            }
+            console.log('staff results---',staffResult.rows);
+            if (staffResult.rows.length > 0) {
+                obj['staffCount'] = staffResult.rows;
+                staffCount = staffResult.rows[0].totalStaff;
+            }
+
+            
+            obj['roomNo'] = classResult.rows[x].id;
+            recordData.push(obj);
+        }
+
+        console.log(recordData);
+        res.json({
+            message: 'Ratio Data',
+            statusCode: 200,
+            data: recordData,
+            status: true
+        });
+    } catch (err) {
+        console.log(err);
+        res.json({
+            message: 'Check Error',
+            statusCode: 400,
+            data: [],
+            status: false
+        });
+    }
+};
+
 
 
   
-module.exports={classCount,activityCount,getStudents,attendanceCount};
+module.exports={classCount,activityCount,getStudents,attendanceCount,countRatio};
